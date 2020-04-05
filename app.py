@@ -320,7 +320,7 @@ class DataPreprocessing():
 
 app = Flask(__name__)
 model = pickle.load(open('model.pkl', 'rb'))
-
+df = pd.DataFrame()
 #eam_info = pd.read_pickle("teams1.pkl")
 
 #player_wr = pd.read_pickle("./player_wr_1.pkl")
