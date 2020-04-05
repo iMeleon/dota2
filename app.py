@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 import json
-import requests as req
+#import requests as req
 import numpy as np
 import pandas as pd
 import pickle
