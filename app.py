@@ -1,12 +1,14 @@
 from datetime import datetime
+from datetime import datetime
 import time
 import json
 import requests as req
 import numpy as np
 import pandas as pd
 import pickle
-from flask import Flask, jsonify, request, make_response, render_template
+from flask import Flask, jsonify, request, make_response, abort, render_template
 import pandas as pd
+
 app = Flask(__name__)
 model = pickle.load(open('model.pkl', 'rb'))
 
