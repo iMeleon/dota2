@@ -99,21 +99,6 @@ class DataPreprocessing():
         else:
             self.players_wr = pd.DataFrame()
 
-    def pro_matches_update(self, n=1, sleep_time=1.37, last=False):
-        for i in range(n):
-            if len(self.pro_matches) == 0:
-                matches = api.get_recent_pro_matches(False)
-                self.add_pro_match(matches[0])
-            elif last:
-                last_pro_match_id = self.pro_matches['match_id'].values[-1]
-                matches = api.get_recent_pro_matches(last_pro_match_id)
-            else:
-                matches = api.get_recent_pro_matches(False)
-            for i, match in enumerate(matches):
-                if match['match_id'] not in self.pro_matches['match_id'].values:
-                    time.sleep(sleep_time)
-                    self.add_pro_match(match)
-            data.pro_matches.to_pickle("./pro_maches.pkl")
 
     def add_pro_match(self, match):
         """ Get general information from the match and append to self.matches. """
@@ -162,8 +147,8 @@ class DataPreprocessing():
 
             if (len(self.team_info) == 0) or (id not in self.team_info['team_id'].values):
                 self.team_info = self.team_info.append(pd.DataFrame(team_d), ignore_index=True)
-                self.team_info.to_pickle("./teams1.pkl")
-                self.team_info.to_pickle("./teams2.pkl")
+                self.team_info.to_csv("./teams1.csv")
+                self.team_info.to_csv("./teams2.csv")
             return True
         else:
             print(team)
@@ -180,8 +165,8 @@ class DataPreprocessing():
             players_d = {key: [player_dict[key]] for key in player_dict}
             if (len(self.players_wr) == 0) or (id not in self.players_wr['player_id'].values):
                 self.players_wr = self.players_wr.append(pd.DataFrame(players_d), ignore_index=True)
-                self.players_wr.to_pickle("./player_wr_1.pkl")
-                self.players_wr.to_pickle("./player_wr_2.pkl")
+                self.players_wr.to_csv("./player_wr_1.csv")
+                self.players_wr.to_csv("./player_wr_2.csv")
         else:
             print(player)
             print(id)
@@ -203,7 +188,7 @@ class DataPreprocessing():
                 return
             if id not in self.matches['match_id'].values:
                 self.add_match_by_id(id)
-        self.matches.to_pickle("./matches8_12.pkl")
+        self.matches.to_csv("matches8_12.csv")
 
     def add_tean_info_row(self, row):
 
@@ -321,9 +306,8 @@ class DataPreprocessing():
 app = Flask(__name__)
 model = pickle.load(open('model.pkl', 'rb'))
 df = pd.DataFrame()
-eam_info = pd.read_csv('teams1.csv')
-
-#player_wr = pd.read_pickle("./player_wr_1.pkl")
+team_info = pd.read_csv('teams1.csv')
+player_wr = pd.read_csv("player_wr_1.csv")
 
 
 
