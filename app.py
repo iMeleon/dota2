@@ -309,6 +309,9 @@ df = pd.DataFrame()
 team_info = pd.read_csv('teams1.csv')
 player_wr = pd.read_csv("player_wr_1.csv")
 
+api = OpenDotaAPI(verbose=True)
+data = DataPreprocessing(team_info=team_info, players_wr=player_wr)
+model = pickle.load(open('model2.pkl', 'rb'))
 
 
 @app.route('/')
