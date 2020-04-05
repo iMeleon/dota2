@@ -2,6 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="54d70d30-a6f2-4f53-9ea1-62dac9632c3c" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/model2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/player_wr_1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/player_wr_2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/teams1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/teams2.pkl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -21,6 +26,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunManager">
