@@ -321,6 +321,13 @@ class DataPreprocessing():
 app = Flask(__name__)
 model = pickle.load(open('model.pkl', 'rb'))
 
+team_info = pd.read_pickle("./teams1.pkl")
+player_wr = pd.read_pickle("./player_wr_1.pkl")
+
+api = OpenDotaAPI(verbose=True)
+data = DataPreprocessing(team_info=team_info, players_wr=player_wr)
+model = pickle.load(open('model2.pkl', 'rb'))
+
 @app.route('/')
 def home():
     return render_template('index.html')
