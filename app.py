@@ -314,23 +314,30 @@ data = DataPreprocessing(team_info=team_info, players_wr=player_wr)
 model = pickle.load(open('model2.pkl', 'rb'))
 
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/predict',methods=['POST'])
-def predict():
-    '''
-    For rendering results on HTML GUI
-    '''
-    int_features = [int(x) for x in request.form.values()]
-    final_features = [np.array(int_features)]
-    prediction = model.predict(final_features)
-
-    output = round(prediction[0], 2)
-
-    return render_template('index.html', prediction_text='Employee Salary should be $ {}'.format(output))
+@app.route('/predict', methods=['GET'])
+def get_tasks():
+    id1 = request.args.get('id1', None)
+    id2 = request.args.get('id2', None)
+    if id1 is None:
+        abort(400, description="id1 is None")
+    if id2 is None:
+        abort(400, description="id2 is None")
+    x1 = data.solve(int(id1), int(id2))
+    result = model.predict_proba(x1)
+    x2 = data.solve(int(id2), int(id1))
+    result2 = model.predict_proba(x2)
+    return jsonify({'Team_1_id_{}'.format(id1): (result[0][1] + result2[0][0])/2, 'Team_2_id_{}'.format(id2): (result[0][0] + result2[0][1])/2})
 
 
-if __name__ == "__main__":
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
+
+
+@app.errorhandler(400)
+def not_found2(error):
+    return make_response(jsonify({'error': error.description}), 400)
+
+
+if __name__ == '__main__':
     app.run(debug=True)
