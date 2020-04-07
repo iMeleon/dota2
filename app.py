@@ -9,6 +9,7 @@ import pickle
 from flask import Flask, jsonify, request, make_response, abort, render_template
 import pandas as pd
 
+
 class OpenDotaAPI():
     def __init__(self, verbose=False):
         self.verbose = verbose
@@ -31,6 +32,10 @@ class OpenDotaAPI():
 
     def get_teem_players(self, team_id):
         url = "https://api.opendota.com/api/teams/{}/players".format(team_id)
+        return self._call(url, None, tries=2)
+
+    def get_teams(self):
+        url = "https://api.opendota.com/api/teams"
         return self._call(url, None, tries=2)
 
     # Return a dictionary with match information
@@ -100,60 +105,33 @@ class DataPreprocessing():
             self.players_wr = pd.DataFrame()
 
 
-    def add_pro_match(self, match):
-        """ Get general information from the match and append to self.matches. """
-        pro_match_col = ['match_id', 'radiant_team_id', 'radiant_name',
-                         'dire_team_id', 'dire_name', 'radiant_win']
-        dict_match = {key: [match[key]] for key in pro_match_col}
 
-        local_match = api.get_match_info(match['match_id'])
-        if 'error' in local_match:
-            print(local_match)
-
-        dict_match['game_mode'] = local_match['game_mode']
-        dict_match['patch'] = local_match['patch']
-
-        players = pd.DataFrame(pd.Series(
-            {'player_{}'.format(i): player['account_id'] for i, player in enumerate(local_match['players'])})).T
-        names = [*['r_hero_{}'.format(i) for i in range(1, 132)], *['d_hero_{}'.format(i) for i in range(1, 132)],
-                 *['r_hero__ban_{}'.format(i) for i in range(1, 132)],
-                 *['d_hero__ban_{}'.format(i) for i in range(1, 132)]]
-        pick_bans = pd.Series({name: 0 for name in names})
-        if (local_match['game_mode'] == 2) and (local_match['picks_bans'] != None):
-            for move in local_match['picks_bans']:
-                if move['team']:
-                    if move['is_pick']:
-                        pick_bans['d_hero_{}'.format(move['hero_id'])] = 1
-                    else:
-                        pick_bans['d_hero__ban_{}'.format(move['hero_id'])] = 1
-                else:
-                    if move['is_pick']:
-                        pick_bans['r_hero_{}'.format(move['hero_id'])] = 1
-                    else:
-                        pick_bans['r_hero__ban_{}'.format(move['hero_id'])] = 1
-        pi_bans_df = pd.DataFrame(pick_bans).T
-
-        df_from_dict = pd.DataFrame(dict_match)
-        self.pro_matches = self.pro_matches.append(pd.concat([df_from_dict, players, pi_bans_df], axis=1),
-                                                   ignore_index=True)
-
-    def get_team_info(self, id):
+    def get_team_info(self, id, sleep_time=1.3):
+        time.sleep(sleep_time)
         team = api.get_team_info(id)
         if team == None:
             return False
         if 'error' not in team:
-            team['WR'] = team['wins'] / (team['losses'] + team['wins'])
+            if (team['wins'] is None or team['losses'] is None):
+                team['WR'] = 0.5
+                team['rating'] = 988.488
+                team['wins'] = 10
+                team['losses'] = 10
+            else:
+                team['WR'] = team['wins'] / (team['losses'] + team['wins'])
             team_d = {key: [team[key]] for key in team}
-
-            if (len(self.team_info) == 0) or (id not in self.team_info['team_id'].values):
-                self.team_info = self.team_info.append(pd.DataFrame(team_d), ignore_index=True)
-                self.team_info.to_csv("./teams1.csv")
-                self.team_info.to_csv("./teams2.csv")
+            if team['team_id'] in self.team_info.index:
+                self.team_info.append(pd.DataFrame(team_d, index=[team['team_id']]))
+            else:
+                self.team_info = pd.concat([pd.DataFrame(team_d, index=[team['team_id']]), self.team_info])
+            self.team_info.to_csv("teams1.csv")
+            self.team_info.to_csv("teams2.csv")
             return True
         else:
-            print(team)
+            return False
 
-    def get_player_wr(self, id):
+    def get_player_wr(self, id, sleep_time=1.39):
+        time.sleep(sleep_time)
         player = api.get_player_wr(id)
         if 'error' not in player:
             player_dict = {}
@@ -163,15 +141,16 @@ class DataPreprocessing():
                 player_dict['WR'] = player['win'] / (player['lose'] + player['win'])
             player_dict['player_id'] = id
             players_d = {key: [player_dict[key]] for key in player_dict}
-            if (len(self.players_wr) == 0) or (id not in self.players_wr['player_id'].values):
-                self.players_wr = self.players_wr.append(pd.DataFrame(players_d), ignore_index=True)
-                self.players_wr.to_csv("./player_wr_1.csv")
-                self.players_wr.to_csv("./player_wr_2.csv")
+            if id in self.players_wr.index:
+                self.players_wr.update(pd.DataFrame(players_d, index=[id]))
+            else:
+                self.players_wr = pd.concat([pd.DataFrame(players_d, index=[id]), self.players_wr])
+            self.players_wr.to_csv("player_wr_1.csv")
+            self.players_wr.to_csv("player_wr_2.csv")
         else:
             print(player)
             print(id)
-
-
+        print(self.players_wr.shape)
     def add_match_by_id(self, id, sleep_time=1.3):
         time.sleep(sleep_time)
         match = api.get_match_info(id)
@@ -191,32 +170,39 @@ class DataPreprocessing():
         self.matches.to_csv("matches8_12.csv")
 
     def add_tean_info_row(self, row):
+        radiant_id = row['radiant_team_id']
+        dire_id = row['dire_team_id']
+        new_row = row
 
-        if row['radiant_team_id'] not in self.team_info['team_id'].values:
-            if not self.get_team_info(row['radiant_team_id']):
-                row['radiant_team_id'] = 0
-        if row['dire_team_id'] not in self.team_info['team_id'].values:
-            if not self.get_team_info(row['dire_team_id']):
-                row['dire_team_id'] = 0
+        if radiant_id not in self.team_info.index:
+            if self.get_team_info(radiant_id) == False:
+                radiant_id = 0
+        if dire_id not in self.team_info.index:
+            if self.get_team_info(dire_id) == False:
+                dire_id = 0
         r = 0
         d = 0
         for i, id in enumerate(row[['player_{}'.format(x) for x in range(10)]]):
-
-            if id not in self.players_wr['player_id'].values:
+            if id not in self.players_wr.index:
                 self.get_player_wr(id)
-            row['player_{}_wr'.format(i)] = self.players_wr[self.players_wr['player_id'] == id]['WR'].values[0]
-            if i < 5:
-                r += self.players_wr[self.players_wr['player_id'] == id]['WR'].values[0]
-            else:
-                d += self.players_wr[self.players_wr['player_id'] == id]['WR'].values[0]
-        row['r_rating'] = self.team_info[self.team_info['team_id'] == row['radiant_team_id']]['rating'].values[0]
-        row['r_wr_team'] = self.team_info[self.team_info['team_id'] == row['radiant_team_id']]['WR'].values[0]
+                print('123')
+                print(id)
+                print(id not in self.players_wr.index)
 
-        row['d_rating'] = self.team_info[self.team_info['team_id'] == row['dire_team_id']]['rating'].values[0]
-        row['d_wr_team'] = self.team_info[self.team_info['team_id'] == row['dire_team_id']]['WR'].values[0]
-        if row['r_wr_team'] == 0:
+            player_winrate = self.players_wr.loc[id]['WR']
+            new_row['player_{}_wr'.format(i)] = player_winrate
+            if i < 5:
+                r += player_winrate
+            else:
+                d += player_winrate
+        row['r_rating'] = self.team_info.loc[radiant_id]['rating']
+        row['r_wr_team'] = self.team_info.loc[radiant_id]['WR']
+
+        row['d_rating'] = self.team_info.loc[dire_id]['rating']
+        row['d_wr_team'] = self.team_info.loc[dire_id]['WR']
+        if (row['r_wr_team'] == 0):
             row['r_wr_team'] = 0.5
-        if row['d_wr_team'] == 0:
+        if (row['d_wr_team'] == 0):
             row['d_wr_team'] = 0.5
         row['wr_team_ratio'] = row['r_wr_team'] / row['d_wr_team']
         row['wr_players_ratio'] = r / d
@@ -284,6 +270,7 @@ class DataPreprocessing():
             players = [player for player in players if
                        ((player['is_current_team_member'] == True) or (player['is_current_team_member'] is None))]
         players = sorted(players, key=lambda player: 0 if (player['is_current_team_member'] == True) else 1)
+
         return players[:5]
 
     def solve(self, id_radiant, id_dire):
@@ -303,16 +290,55 @@ class DataPreprocessing():
              'player_9'], axis=1)
         return df
 
+    def get_id_by_name(self, name1, name2):
+
+
+        teams = api.get_teams()
+
+        resp = {}
+        id1 = None
+        id2 = None
+        for team in teams:
+            if name1 == team['name'] or name1 == team['tag']:
+                id1 = team['team_id']
+        if id1 is None:
+            if name1 in self.team_info['name'].values:
+                id1 = self.team_info[self.team_info['name'] == name1].sort_values(by=['rating']).index[-1]
+            elif name1 in data.team_info['tag'].values:
+                id1 = self.team_info[self.team_info['tag'] == name1].sort_values(by=['rating']).index[-1]
+        if id1 is None:
+            id1 = 0
+            resp['error'] = 'name1 dont exist'
+        resp['id1'] = id1
+
+        for team in teams:
+            if name2 == team['name'] or name2 == team['tag']:
+                id2 = team['team_id']
+        if id2 is None:
+            if name2 in self.team_info['name'].values:
+                id2 = self.team_info[self.team_info['name'] == name2].sort_values(by=['rating']).index[-1]
+            elif name2 in data.team_info['tag'].values:
+                id2 = self.team_info[self.team_info['tag'] == name2].sort_values(by=['rating']).index[-1]
+        if id2 is None:
+            id2 = 0
+            resp['error'] = 'name2 dont exist'
+        resp['id2'] = id2
+        return resp
+
+
 app = Flask(__name__)
 model = pickle.load(open('model.pkl', 'rb'))
 df = pd.DataFrame()
-team_info = pd.read_csv('teams1.csv')
-player_wr = pd.read_csv("player_wr_1.csv")
+team_info = pd.read_csv('teams1.csv', index_col=0)
+player_wr = pd.read_csv("player_wr_1.csv", index_col=0)
 
 api = OpenDotaAPI(verbose=True)
 data = DataPreprocessing(team_info=team_info, players_wr=player_wr)
 model = pickle.load(open('model2.pkl', 'rb'))
 
+#print(data.players_wr.shape, data.team_info.shape)
+#print(data.players_wr.loc[19672354])
+#print(data.players_wr[:2])
 
 @app.route('/predict', methods=['GET'])
 def get_tasks():
@@ -326,7 +352,30 @@ def get_tasks():
     result = model.predict_proba(x1)
     x2 = data.solve(int(id2), int(id1))
     result2 = model.predict_proba(x2)
-    return jsonify({'Team_1_id_{}'.format(id1): (result[0][1] + result2[0][0])/2, 'Team_2_id_{}'.format(id2): (result[0][0] + result2[0][1])/2})
+    return jsonify({'Team1': (result[0][1] + result2[0][0]) / 2, 'Team2': (result[0][0] + result2[0][1]) / 2})
+
+
+@app.route('/predictbyname', methods=['GET'])
+def get_tasks2():
+    name1 = request.args.get('name1', None)
+    name2 = request.args.get('name2', None)
+    if name1 is None:
+        abort(400, description="id1 is None")
+    if name2 is None:
+        abort(400, description="id2 is None")
+    dic = data.get_id_by_name(name1, name2)
+    print(dic)
+    id1 = dic['id1']
+    id2 = dic['id2']
+    x1 = data.solve(int(id1), int(id2))
+    result = model.predict_proba(x1)
+    x2 = data.solve(int(id2), int(id1))
+    result2 = model.predict_proba(x2)
+    resp = {'Team_1': (result[0][1] + result2[0][0]) / 2,
+            'Team_2': (result[0][0] + result2[0][1]) / 2}
+    if 'error' in dic:
+        resp['error'] = dic['error']
+    return jsonify(resp)
 
 
 @app.errorhandler(404)
