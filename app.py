@@ -291,39 +291,15 @@ class DataPreprocessing():
         return df
 
     def get_id_by_name(self, name1, name2):
-
-
-        teams = api.get_teams()
-
-        resp = {}
         id1 = None
         id2 = None
-        for team in teams:
-            if name1 == team['name'] or name1 == team['tag']:
-                id1 = team['team_id']
-        if id1 is None:
-            if name1 in self.team_info['name'].values:
-                id1 = self.team_info[self.team_info['name'] == name1].sort_values(by=['rating']).index[-1]
-            elif name1 in data.team_info['tag'].values:
-                id1 = self.team_info[self.team_info['tag'] == name1].sort_values(by=['rating']).index[-1]
-        if id1 is None:
-            id1 = 0
-            resp['error'] = 'name1 dont exist'
-        resp['id1'] = id1
-
-        for team in teams:
-            if name2 == team['name'] or name2 == team['tag']:
-                id2 = team['team_id']
-        if id2 is None:
-            if name2 in self.team_info['name'].values:
-                id2 = self.team_info[self.team_info['name'] == name2].sort_values(by=['rating']).index[-1]
-            elif name2 in data.team_info['tag'].values:
-                id2 = self.team_info[self.team_info['tag'] == name2].sort_values(by=['rating']).index[-1]
-        if id2 is None:
-            id2 = 0
-            resp['error'] = 'name2 dont exist'
-        resp['id2'] = id2
-        return resp
+        for row in team_info2.iterrows():
+            if ((name1 == row[1]['name']) or (name1 == row[1]['tag'])):
+                id1 = row[1]['team_id']
+        for row in team_info2.iterrows():
+            if ((name2 == row[1]['name']) or (name2 == row[1]['tag'])):
+                id2 = row[1]['team_id']
+        return id1, id2
 
 
 app = Flask(__name__)
@@ -331,6 +307,7 @@ model = pickle.load(open('model.pkl', 'rb'))
 df = pd.DataFrame()
 team_info = pd.read_csv('teams1.csv', index_col=0)
 player_wr = pd.read_csv("player_wr_1.csv", index_col=0)
+team_info2 = pd.read_csv('team_info2.csv',index_col=0)
 
 api = OpenDotaAPI(verbose=True)
 data = DataPreprocessing(team_info=team_info, players_wr=player_wr)
@@ -338,7 +315,8 @@ model = pickle.load(open('model2.pkl', 'rb'))
 
 #print(data.players_wr.shape, data.team_info.shape)
 #print(data.players_wr.loc[19672354])
-#print(data.players_wr[:2])
+print(data.team_info.shape)
+
 
 @app.route('/predict', methods=['GET'])
 def get_tasks():
@@ -363,18 +341,17 @@ def get_tasks2():
         abort(400, description="id1 is None")
     if name2 is None:
         abort(400, description="id2 is None")
-    dic = data.get_id_by_name(name1, name2)
-    print(dic)
-    id1 = dic['id1']
-    id2 = dic['id2']
+    id1,id2 = data.get_id_by_name(name1, name2)
+    if id1 is None:
+        abort(400, description="Name 1 not found")
+    if id2 is None:
+        abort(400, description="Name 2 not found")
     x1 = data.solve(int(id1), int(id2))
     result = model.predict_proba(x1)
     x2 = data.solve(int(id2), int(id1))
     result2 = model.predict_proba(x2)
     resp = {'Team_1': (result[0][1] + result2[0][0]) / 2,
             'Team_2': (result[0][0] + result2[0][1]) / 2}
-    if 'error' in dic:
-        resp['error'] = dic['error']
     return jsonify(resp)
 
 
