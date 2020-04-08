@@ -296,9 +296,11 @@ class DataPreprocessing():
         for row in team_info2.iterrows():
             if ((name1 == row[1]['name']) or (name1 == row[1]['tag'])):
                 id1 = row[1]['team_id']
+                break
         for row in team_info2.iterrows():
             if ((name2 == row[1]['name']) or (name2 == row[1]['tag'])):
                 id2 = row[1]['team_id']
+                break
         return id1, id2
 
 
@@ -341,7 +343,8 @@ def get_tasks2():
         abort(400, description="id1 is None")
     if name2 is None:
         abort(400, description="id2 is None")
-    id1,id2 = data.get_id_by_name(name1, name2)
+    id1, id2 = data.get_id_by_name(name1, name2)
+    print(id1, id2)
     if id1 is None:
         abort(400, description="Name 1 not found")
     if id2 is None:
