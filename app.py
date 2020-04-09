@@ -294,11 +294,15 @@ class DataPreprocessing():
         id1 = None
         id2 = None
         for row in team_info2.iterrows():
-            if ((name1 == row[1]['name']) or (name1 == row[1]['tag'])):
+            if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (
+                    name1.lower().strip() == row[1]['tag'].lower().strip()) or (
+                    name1.lower() == row[1]['name2'].lower().strip())):
                 id1 = row[1]['team_id']
                 break
         for row in team_info2.iterrows():
-            if ((name2 == row[1]['name']) or (name2 == row[1]['tag'])):
+            if ((name2.lower().strip() == row[1]['name'].lower().strip()) or (
+                    name2.lower().strip() == row[1]['tag'].lower().strip()) or (
+            (name2.lower().strip() == row[1]['name2'].lower().strip()))):
                 id2 = row[1]['team_id']
                 break
         return id1, id2
