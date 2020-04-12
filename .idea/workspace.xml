@@ -2,9 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="54d70d30-a6f2-4f53-9ea1-62dac9632c3c" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/account_wr.pickle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/capitan_wr.pickle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/elo_teams.pickle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model .pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model.pickle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pro_matches.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/team_info.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/team_wr.pickle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/team_info2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/team_info2.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/model2.pkl" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,22 +86,22 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="778" y="274" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1586109905075" />
-    <state width="1377" height="222" key="GridCell.Tab.0.bottom" timestamp="1586464612780">
+    <state width="1377" height="222" key="GridCell.Tab.0.bottom" timestamp="1586570367958">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1377" height="222" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1586464612780" />
-    <state width="1377" height="222" key="GridCell.Tab.0.center" timestamp="1586464612780">
+    <state width="1377" height="222" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1586570367958" />
+    <state width="1377" height="222" key="GridCell.Tab.0.center" timestamp="1586570367958">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1377" height="222" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1586464612780" />
-    <state width="1377" height="222" key="GridCell.Tab.0.left" timestamp="1586464612780">
+    <state width="1377" height="222" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1586570367957" />
+    <state width="1377" height="222" key="GridCell.Tab.0.left" timestamp="1586570367957">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1377" height="222" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1586464612780" />
-    <state width="1377" height="222" key="GridCell.Tab.0.right" timestamp="1586464612780">
+    <state width="1377" height="222" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1586570367957" />
+    <state width="1377" height="222" key="GridCell.Tab.0.right" timestamp="1586570367958">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1377" height="222" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1586464612780" />
+    <state width="1377" height="222" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1586570367958" />
     <state width="1377" height="276" key="GridCell.Tab.1.bottom" timestamp="1586113083980">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
