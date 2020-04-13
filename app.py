@@ -345,20 +345,41 @@ def predict(id1, id2):
                   'total_d_games', 'total_capitan_games_tario',
                   'total_players_games_tario', 'elo_rating_ratio']]
     return res
+
+
 def get_id_by_name(name1, name2):
-        id1 = None
-        id2 = None
-        for row in team_info.iterrows():
-            if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (
-                    name1.lower().strip() == row[1]['tag'].lower().strip())):
+    id1 = None
+    id2 = None
+    team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
+    for row in team_info_new.iterrows():
+        if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (name1.lower().strip() == row[1]['tag'].lower().strip())):
+            id1 = row[1]['team_id']
+            break
+        else:
+            name1_list  = name1.lower().strip().split()
+            name_from_teams_list = row[1]['name'].lower().strip().split()
+            for word in ['team', 'gaming', '!']:
+                if word in name1_list: name1_list.remove(word)
+                if word in name_from_teams_list: name_from_teams_list.remove(word)
+            if name1_list[0] in name_from_teams_list:
                 id1 = row[1]['team_id']
                 break
-        for row in team_info.iterrows():
-            if ((name2.lower().strip() == row[1]['name'].lower().strip()) or (
-                    name2.lower().strip() == row[1]['tag'].lower().strip()) ):
+
+    for row in team_info_new.iterrows():
+        if ((name2.lower().strip() == row[1]['name'].lower().strip()) or (name2.lower().strip() == row[1][
+            'tag'].lower().strip())):
+            id2 = row[1]['team_id']
+            break
+        else:
+            name2_list  = name2.lower().strip().split()
+            name_from_teams_list = row[1]['name'].lower().strip().split()
+            for word in ['team', 'gaming', '!']:
+                if word in name2_list: name2_list.remove(word)
+                if word in name_from_teams_list: name_from_teams_list.remove(word)
+            if name2_list[0] in name_from_teams_list:
                 id2 = row[1]['team_id']
                 break
-        return id1, id2
+    return id1, id2
 def winrate(win,loss):
     if loss+win == 0:
         return 0.47722
@@ -459,8 +480,8 @@ def find_team_cap(id_team):
 
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
-#pro_matches = api.get_pro_matches_custom_sql()
-#pro_matches.to_csv('pro_matches.csv') #update pro_matches
+# pro_matches = api.get_pro_matches_custom_sql()
+# pro_matches.to_csv('pro_matches.csv') #update pro_matches
 # team_info = api.get_teams_rating_db()
 # team_info = team_info.fillna('_')
 # team_info['team_id'].loc[6488512] = 7217630
@@ -491,6 +512,7 @@ team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
+#print(pro_matches[:1]['match_id'])
 
 #print(data.players_wr.shape, data.team_info.shape)
 #print(data.players_wr.loc[19672354])
@@ -534,7 +556,12 @@ def get_tasks2():
 
     result2 = model.predict_proba(x2)
     resp = {'Team_1': (result[0][1] + result2[0][0]) / 2,
-            'Team_2': (result[0][0] + result2[0][1]) / 2}
+            'Team_2': (result[0][0] + result2[0][1]) / 2,
+            'Name_1': team_info.loc[id1]['name'],
+            'Name_2': team_info.loc[id2]['name'],
+            'id1' : id1,
+            'id2' : id2
+            }
     return jsonify(resp)
 
 
