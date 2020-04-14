@@ -350,6 +350,8 @@ def predict(id1, id2):
 def get_id_by_name(name1, name2):
     id1 = None
     id2 = None
+    name1 = name1.replace("-", "")
+    name1 = name1.replace("-", "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
     for row in team_info_new.iterrows():
         if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (name1.lower().strip() == row[1]['tag'].lower().strip())):
@@ -518,7 +520,9 @@ elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
 #print(data.players_wr.loc[19672354])
 
 
-
+@app.route('/ppp')
+def home():
+    return render_template('index.html')
 @app.route('/predict', methods=['GET'])
 def get_tasks():
     id1 = request.args.get('id1', None)
@@ -550,7 +554,6 @@ def get_tasks2():
     if id2 is None:
         abort(400, description="Name 2 not found")
     x1 = make_row(int(id1), int(id2))
-    print(x1[['r_rating','d_rating']])
     result = model.predict_proba(x1)
     x2 = make_row(int(id2), int(id1))
 
@@ -564,6 +567,37 @@ def get_tasks2():
             }
     return jsonify(resp)
 
+@app.route('/predict',methods=['POST'])
+def predict():
+    '''
+    For rendering results on HTML GUI
+    '''
+    # int_features = [int(x) for x in request.form.values()]
+
+    name1 = request.form['Name1']
+    name2 = request.form['Name2']
+    if name1 is None:
+        abort(400, description="id1 is None")
+    if name2 is None:
+        abort(400, description="id2 is None")
+    print(name1, name2)
+    id1, id2 = get_id_by_name(name1, name2)
+    print(id1, id2)
+    if id1 is None or id is None:
+        return render_template('index.html', prediction_text='{},{} fix name pls'.format(id1,id2))
+    x1 = make_row(int(id1), int(id2))
+    result = model.predict_proba(x1)
+    x2 = make_row(int(id2), int(id1))
+
+    result2 = model.predict_proba(x2)
+    resp = {'Team_1': (result[0][1] + result2[0][0]) / 2,
+            'Team_2': (result[0][0] + result2[0][1]) / 2,
+            'Name_1': team_info.loc[id1]['name'],
+            'Name_2': team_info.loc[id2]['name'],
+            'id1': id1,
+            'id2': id2
+            }
+    return render_template('index.html', prediction_text='{}'.format(resp))
 
 @app.errorhandler(404)
 def not_found(error):

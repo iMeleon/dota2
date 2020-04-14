@@ -8,28 +8,146 @@
 <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
 <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
 <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
   
 </head>
 
 <body>
  <div class="login">
-	<h1>Predict Salary Analysis</h1>
+	<h1>Dota 2 predictor</h1>
 
      <!-- Main Input For Receiving Query to our ML -->
-    <form action="{{ url_for('predict')}}"method="post">
-    	<input type="text" name="experience" placeholder="Experience" required="required" />
-        <input type="text" name="test_score" placeholder="Test Score" required="required" />
-		<input type="text" name="interview_score" placeholder="Interview Score" required="required" />
 
-        <button type="submit" class="btn btn-primary btn-block btn-large">Predict</button>
-    </form>
+        <form action="{{ url_for('predict')}}"method="post">
+          <div class="form-group">
+          <div class="form-group">
+            <label for="exampleInputEmail1">Email address</label>
+               	<input id = exampleInputEmail1  type="text" name="Name1" placeholder="Team_A" required="required" />
+            <small id="emailHelp" class="form-text text-muted">.</small>
+          </div>
+          <div class="form-group">
+            <label for="exampleInputPassword1">Password</label>
+           <input id = exampleInputPassword1  type="text" name="Name2" placeholder="Team_B" required="required" />
+          </div>
+
+          <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+          </form>
 
    <br>
    <br>
-   {{ prediction_text }}
 
+<h3>{{ prediction_text }}</h3>
  </div>
 
-
+<ul class="list-unstyled">
+	<li>Team Secret</li>
+	<li>OG</li>
+	<li>Vici Gaming</li>
+	<li>VGJ Storm</li>
+	<li>0</li>
+	<li>Fnatic</li>
+	<li>Royal Never Give Up</li>
+	<li>Team NP</li>
+	<li>PSG.LGD</li>
+	<li>Virtus.pro</li>
+	<li>INVICTUS GAMING</li>
+	<li>(monkey) Business</li>
+	<li>Nigma</li>
+	<li>Evil Geniuses</li>
+	<li>BigGooooood</li>
+	<li>LV-Gaming</li>
+	<li>Titan</li>
+	<li>Sparking Arrow Gaming</li>
+	<li>Newbee</li>
+	<li>Winstrike</li>
+	<li>w33ha earthspirit</li>
+	<li>Scenario</li>
+	<li>Mineski</li>
+	<li>TeamMalaysia</li>
+	<li>Thunder Awaken ///</li>
+	<li>EHOME</li>
+	<li>Thunder Predator</li>
+	<li>boths try again</li>
+	<li>TEAMERINO TINKERINO</li>
+	<li>Newbee</li>
+	<li>ViKin.gg</li>
+	<li>Radical Online X-tremists</li>
+	<li>Chaos EC</li>
+	<li>Speed Gaming International</li>
+	<li>Adroit</li>
+	<li>Team Aster</li>
+	<li>$5JuNGz$</li>
+	<li>Alliance</li>
+	<li>VGJ Thunder</li>
+	<li>Faceless</li>
+	<li>Gambit Esports</li>
+	<li>BOOM Esports</li>
+	<li>beastcoast</li>
+	<li>FlyToMoon</li>
+	<li>Positive Guys</li>
+	<li>Team VG.J</li>
+	<li>NoPing Esports</li>
+	<li>Team Onyx</li>
+	<li>Orange.Neolution Esports</li>
+	<li>Royal</li>
+	<li>CDEC.Y</li>
+	<li>0</li>
+	<li>0</li>
+	<li>Team. Spirit</li>
+	<li>4 Friends + Chrillee</li>
+	<li>Rock.Young</li>
+	<li>Vega Squadron</li>
+	<li>LUCCINI GAM1NG</li>
+	<li>NAM VEZET-MI IGRAEM</li>
+	<li>AftershockGaming Int.</li>
+	<li>Lajons</li>
+	<li>Sneaky Nyx Assassins</li>
+	<li>Team Freedom</li>
+	<li>G.star</li>
+	<li>Friends</li>
+	<li>YOSHIMOTO.DETONATOR</li>
+	<li>CDEC</li>
+	<li>Scythe.SG-</li>
+	<li>Natus Vincere</li>
+	<li>FnaticRaidCall</li>
+	<li>MOTIVADE.TRUST GAMING</li>
+	<li>the wings gaming</li>
+	<li>TEAM TEAM</li>
+	<li>Nvidia.ArrowGaming.AVF</li>
+	<li>The Pango</li>
+	<li>Aggressive 5</li>
+	<li>Osliki Gaming</li>
+	<li>Chicken Fighters !</li>
+	<li>SG e-sports</li>
+	<li>Horde</li>
+	<li>Geek Fam</li>
+	<li>0</li>
+	<li>Battle Zone-</li>
+	<li>Chaos Esports Club</li>
+	<li>SIGMA.int</li>
+	<li>Team Orca</li>
+	<li>Planet Dog</li>
+	<li>North American Rejects</li>
+	<li>Dream time.</li>
+	<li>Shazam~</li>
+	<li>T.O.T</li>
+	<li>iCCup Team</li>
+	<li>Newbee.mgb</li>
+	<li>Doggy Team</li>
+	<li>Zero Latitude</li>
+	<li>Wind and Rain</li>
+	<li>Dwayne 'The John' Rockson</li>
+	<li>Team AD FINEM</li>
+	<li>ReckoninG eSports</li>
+	<li>HellRaisers</li>
+</ul>
 </body>
 </html>
