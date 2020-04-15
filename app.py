@@ -343,16 +343,27 @@ def get_id_by_name(name1, name2):
     id1 = None
     id2 = None
     name1 = name1.replace("-", "")
-    name1 = name1.replace("-", "")
+    name2 = name2.replace("-", "")
+    name1 = name1.replace(".", "")
+    name2 = name2.replace(".", "")
+    name1 = name1.lower().strip()
+    name2 = name2.lower().strip()
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
     for row in team_info_new.iterrows():
-        if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (name1.lower().strip() == row[1][
-            'tag'].lower().strip())):  # or(name1.lower() == row[1]['name2'].lower().strip())
+        team_name = row[1]['name']
+        team_name = team_name.replace("-", "")
+        team_name = team_name.replace(".", "")
+        team_name = team_name.lower().strip()
+        team_tag = row[1]['tag']
+        team_tag = team_tag.replace("-", "")
+        team_tag = team_tag.replace(".", "")
+        team_tag = team_tag.lower().strip()
+        if ((name1 == team_name) or (name1 == team_tag)):
             id1 = row[1]['team_id']
             break
         else:
-            name1_list = name1.lower().strip().split()
-            name_from_teams_list = row[1]['name'].lower().strip().split()
+            name1_list = name1.split()
+            name_from_teams_list = team_name.split()
             for word in ['team', 'gaming', '!']:
                 if word in name1_list: name1_list.remove(word)
                 if word in name_from_teams_list: name_from_teams_list.remove(word)
@@ -361,13 +372,20 @@ def get_id_by_name(name1, name2):
                 break
 
     for row in team_info_new.iterrows():
-        if ((name2.lower().strip() == row[1]['name'].lower().strip()) or (name2.lower().strip() == row[1][
-            'tag'].lower().strip())):  # or ((name2.lower().strip() == row[1]['name2'].lower().strip())
+        team_name = row[1]['name']
+        team_name = team_name.replace("-", "")
+        team_name = team_name.replace(".", "")
+        team_name = team_name.lower().strip()
+        team_tag = row[1]['tag']
+        team_tag = team_tag.replace("-", "")
+        team_tag = team_tag.replace(".", "")
+        team_tag = team_tag.lower().strip()
+        if ((name2 == team_name) or (name2 == team_tag)):
             id2 = row[1]['team_id']
             break
         else:
-            name2_list = name2.lower().strip().split()
-            name_from_teams_list = row[1]['name'].lower().strip().split()
+            name2_list = name2.split()
+            name_from_teams_list = team_name.split()
             for word in ['team', 'gaming', '!']:
                 if word in name2_list: name2_list.remove(word)
                 if word in name_from_teams_list: name_from_teams_list.remove(word)
