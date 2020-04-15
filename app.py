@@ -36,7 +36,7 @@ class OpenDotaAPI():
         return pd.DataFrame(teams_rating, index=[team['team_id'] for team in teams_rating])
     def get_pro_matches_custom_sql(self,limit = 100000):
         err = True
-        url = "https://api.opendota.com/api/explorer?sql=select%20m.match_id,%20m.radiant_win,%20p.patch,%20m.start_time,%20m.leagueid,%20m.game_mode,%20m.radiant_team_id,%20m.dire_team_id,%20m.radiant_team_complete,%20m.dire_team_complete,%20m.radiant_captain,%20m.dire_captain,%20max(case%20when%20pm.rn%20=%201%20then%20pm.account_id%20end)%20account_id_1,%20max(case%20when%20pm.rn%20=%202%20then%20pm.account_id%20end)%20account_id_2,%20max(case%20when%20pm.rn%20=%203%20then%20pm.account_id%20end)%20account_id_3,%20max(case%20when%20pm.rn%20=%204%20then%20pm.account_id%20end)%20account_id_4,%20max(case%20when%20pm.rn%20=%205%20then%20pm.account_id%20end)%20account_id_5,%20max(case%20when%20pm.rn%20=%206%20then%20pm.account_id%20end)%20account_id_6,%20max(case%20when%20pm.rn%20=%207%20then%20pm.account_id%20end)%20account_id_7,%20max(case%20when%20pm.rn%20=%208%20then%20pm.account_id%20end)%20account_id_8,%20max(case%20when%20pm.rn%20=%209%20then%20pm.account_id%20end)%20account_id_9,%20max(case%20when%20pm.rn%20=%2010%20then%20pm.account_id%20end)%20account_id_10%20from%20matches%20m%20inner%20join(%20select%20pm.*,%20row_number()%20over(partition%20by%20match_id%20order%20by%20player_slot)%20rn%20from%20player_matches%20pm)%20pm%20on%20pm.match_id%20=%20m.match_id%20join%20match_patch%20p%20on%20m.match_id=p.match_id%20group%20by%20m.match_id,p.patch%20order%20by%20m.match_id%20desc%20limit%20{}%20".format(limit)
+        url = "https://api.opendota.com/api/explorer?sql=select%20m.match_id,%20m.radiant_win,%20p.patch,%20m.start_time,%20m.leagueid,%20m.game_mode,%20m.radiant_team_id,%20m.dire_team_id,%20m.radiant_team_complete,%20m.dire_team_complete,%20m.radiant_captain,%20m.dire_captain,%20max(case%20when%20pm.rn%20=%201%20then%20pm.account_id%20end)%20account_id_1,%20max(case%20when%20pm.rn%20=%202%20then%20pm.account_id%20end)%20account_id_2,%20max(case%20when%20pm.rn%20=%203%20then%20pm.account_id%20end)%20account_id_3,%20max(case%20when%20pm.rn%20=%204%20then%20pm.account_id%20end)%20account_id_4,%20max(case%20when%20pm.rn%20=%205%20then%20pm.account_id%20end)%20account_id_5,%20max(case%20when%20pm.rn%20=%206%20then%20pm.account_id%20end)%20account_id_6,%20max(case%20when%20pm.rn%20=%207%20then%20pm.account_id%20end)%20account_id_7,%20max(case%20when%20pm.rn%20=%208%20then%20pm.account_id%20end)%20account_id_8,%20max(case%20when%20pm.rn%20=%209%20then%20pm.account_id%20end)%20account_id_9,%20max(case%20when%20pm.rn%20=%2010%20then%20pm.account_id%20end)%20account_id_10%20from%20matches%20m%20inner%20join(%20select%20pm.*,%20row_number()%20over(partition%20by%20match_id%20order%20by%20player_slot)%20rn%20from%20player_matches%20pm)%20pm%20on%20pm.match_id%20=%20m.match_id%20join%20match_patch%20p%20on%20m.match_id=p.match_id%20%20group%20by%20m.match_id,p.patch%20order%20by%20m.match_id%20desc%20limit%20{}%20".format(limit)#where m.start_time < 1577750400
         while err:
             resp = self._call(url, None,tries= 2)
             if resp['err'] is None:
@@ -192,7 +192,7 @@ def solve(row):
 def solve2(matches):
     X = pd.DataFrame(matches)
     X = X.iloc[::-1]
-    # X = X[X['game_mode'] !=1]
+    X = X[X['game_mode'] !=1]
     X[['radiant_team_id', 'dire_team_id', 'radiant_captain', 'dire_captain']] = X[
         ['radiant_team_id', 'dire_team_id', 'radiant_captain', 'dire_captain']].fillna(0)
     X['radiant_team_id'] = X['radiant_team_id'].astype(int)
@@ -244,15 +244,6 @@ def solve2(matches):
     return X
 
 
-def find_team_cap(id_team):
-    for row in pro_matches.iterrows():
-        match = row[1]
-        if id_team == match['radiant_team_id']:
-            return match[
-                ['account_id_1', 'account_id_2', 'account_id_3', 'account_id_4', 'account_id_5', 'radiant_captain']]
-        elif id_team == match['dire_team_id']:
-            return match[
-                ['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9', 'account_id_10', 'dire_captain']]
 
 
 def predict(id1, id2):
@@ -344,6 +335,7 @@ def predict(id1, id2):
                   'r_total_cap_games', 'd_total_cap_games', 'total_r_games',
                   'total_d_games', 'total_capitan_games_tario',
                   'total_players_games_tario', 'elo_rating_ratio']]
+
     return res
 
 
@@ -354,11 +346,12 @@ def get_id_by_name(name1, name2):
     name1 = name1.replace("-", "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
     for row in team_info_new.iterrows():
-        if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (name1.lower().strip() == row[1]['tag'].lower().strip())):
+        if ((name1.lower().strip() == row[1]['name'].lower().strip()) or (name1.lower().strip() == row[1][
+            'tag'].lower().strip())):  # or(name1.lower() == row[1]['name2'].lower().strip())
             id1 = row[1]['team_id']
             break
         else:
-            name1_list  = name1.lower().strip().split()
+            name1_list = name1.lower().strip().split()
             name_from_teams_list = row[1]['name'].lower().strip().split()
             for word in ['team', 'gaming', '!']:
                 if word in name1_list: name1_list.remove(word)
@@ -369,11 +362,11 @@ def get_id_by_name(name1, name2):
 
     for row in team_info_new.iterrows():
         if ((name2.lower().strip() == row[1]['name'].lower().strip()) or (name2.lower().strip() == row[1][
-            'tag'].lower().strip())):
+            'tag'].lower().strip())):  # or ((name2.lower().strip() == row[1]['name2'].lower().strip())
             id2 = row[1]['team_id']
             break
         else:
-            name2_list  = name2.lower().strip().split()
+            name2_list = name2.lower().strip().split()
             name_from_teams_list = row[1]['name'].lower().strip().split()
             for word in ['team', 'gaming', '!']:
                 if word in name2_list: name2_list.remove(word)
@@ -390,11 +383,14 @@ def winrate(win,loss):
 def make_row(id1,id2):
     r_df = pd.DataFrame()
     d_df = pd.DataFrame()
+    print('228')
     r_df[['account_id_1','account_id_2', 'account_id_3', 'account_id_4', 'account_id_5','radiant_captain']] = pd.DataFrame(find_team_cap(id1)).T.reset_index(drop=True)
+
     d_df[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9','account_id_10','dire_captain']] = pd.DataFrame(find_team_cap(id2)).T.reset_index(drop=True)
     res_df = pd.concat([r_df,d_df], axis = 1)
     res_df['radiant_team_id'] = id1
     res_df['dire_team_id'] = id2
+
     res_df['radiant_captain'] = res_df['radiant_captain'].astype(int)
     res_df['dire_captain'] = res_df['dire_captain'].astype(int)
 
@@ -471,17 +467,23 @@ def make_row(id1,id2):
                   'r_total_cap_games', 'd_total_cap_games', 'total_r_games',
                   'total_d_games', 'total_capitan_games_tario',
                   'total_players_games_tario', 'elo_rating_ratio']]
+    print('END')
     return res
 def find_team_cap(id_team):
     for row in pro_matches.iterrows():
         match = row[1]
+        if match['game_mode'] == 1:
+            continue
         if id_team == match['radiant_team_id']:
+            print('rrr')
             return match[['account_id_1','account_id_2', 'account_id_3', 'account_id_4', 'account_id_5','radiant_captain']]
         elif id_team == match['dire_team_id']:
+            print('ddd')
             return match[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9','account_id_10','dire_captain']]
-
+    abort(400, description="id2 is None")
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
+
 # pro_matches = api.get_pro_matches_custom_sql()
 # pro_matches.to_csv('pro_matches.csv') #update pro_matches
 # team_info = api.get_teams_rating_db()
@@ -514,7 +516,7 @@ team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
-#print(pro_matches[:1]['match_id'])
+print(pro_matches.shape)
 
 #print(data.players_wr.shape, data.team_info.shape)
 #print(data.players_wr.loc[19672354])
@@ -553,11 +555,14 @@ def get_tasks2():
         abort(400, description="Name 1 not found")
     if id2 is None:
         abort(400, description="Name 2 not found")
+
     x1 = make_row(int(id1), int(id2))
     result = model.predict_proba(x1)
+
     x2 = make_row(int(id2), int(id1))
 
     result2 = model.predict_proba(x2)
+
     resp = {'Team_1': (result[0][1] + result2[0][0]) / 2,
             'Team_2': (result[0][0] + result2[0][1]) / 2,
             'Name_1': team_info.loc[id1]['name'],
