@@ -344,6 +344,8 @@ def get_id_by_name(name1, name2):
     id2 = None
     name1 = name1.replace("-", "")
     name2 = name2.replace("-", "")
+    name1 = name1.replace(" ", "")
+    name2 = name2.replace(" ", "")
     name1 = name1.replace(".", "")
     name2 = name2.replace(".", "")
     name1 = name1.lower().strip()
@@ -353,12 +355,14 @@ def get_id_by_name(name1, name2):
         team_name = row[1]['name']
         team_name = team_name.replace("-", "")
         team_name = team_name.replace(".", "")
+        team_name = team_name.replace(" ", "")
         team_name = team_name.lower().strip()
         team_tag = row[1]['tag']
         team_tag = team_tag.replace("-", "")
         team_tag = team_tag.replace(".", "")
         team_tag = team_tag.lower().strip()
         if ((name1 == team_name) or (name1 == team_tag)):
+            print(name2, team_name, team_tag)
             id1 = row[1]['team_id']
             break
         else:
@@ -369,18 +373,21 @@ def get_id_by_name(name1, name2):
                 if word in name_from_teams_list: name_from_teams_list.remove(word)
             if name1_list[0] in name_from_teams_list:
                 id1 = row[1]['team_id']
+                print(name2, team_name, team_tag)
                 break
 
     for row in team_info_new.iterrows():
         team_name = row[1]['name']
         team_name = team_name.replace("-", "")
         team_name = team_name.replace(".", "")
+        team_name = team_name.replace(" ", "")
         team_name = team_name.lower().strip()
         team_tag = row[1]['tag']
         team_tag = team_tag.replace("-", "")
         team_tag = team_tag.replace(".", "")
         team_tag = team_tag.lower().strip()
         if ((name2 == team_name) or (name2 == team_tag)):
+            print(name2, team_name, team_tag)
             id2 = row[1]['team_id']
             break
         else:
@@ -390,6 +397,7 @@ def get_id_by_name(name1, name2):
                 if word in name2_list: name2_list.remove(word)
                 if word in name_from_teams_list: name_from_teams_list.remove(word)
             if name2_list[0] in name_from_teams_list:
+                print(name2, team_name, team_tag)
                 id2 = row[1]['team_id']
                 break
     return id1, id2
@@ -502,39 +510,39 @@ def find_team_cap(id_team):
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
 
-# pro_matches = api.get_pro_matches_custom_sql()
-# pro_matches.to_csv('pro_matches.csv') #update pro_matches
-# team_info = api.get_teams_rating_db()
-# team_info = team_info.fillna('_')
-# team_info['team_id'].loc[6488512] = 7217630
-# team_info['team_id'].loc[7136526] = 7217630
-# team_info['team_id'].loc[5528463] = 5922927
-# team_info = team_info.fillna('__')
-# team_info.to_csv('team_info.csv')
-# team_wr = {}
-# capitan_wr = {}
-# account_wr = {}
-# elo_teams = {}
-# print(123)
-# X = solve2(pro_matches)
-# with open('team_wr.pickle', 'wb') as f:
-#     pickle.dump(team_wr,f)
-# with open('capitan_wr.pickle', 'wb') as f1:
-#     pickle.dump(capitan_wr,f1)
-# with open('account_wr.pickle', 'wb') as f2:
-#     pickle.dump(account_wr,f2)
-# with open('elo_teams.pickle', 'wb') as f3:
-#     pickle.dump(elo_teams,f3)
+pro_matches = api.get_pro_matches_custom_sql()
+pro_matches.to_csv('pro_matches.csv') #update pro_matches
+team_info = api.get_teams_rating_db()
+team_info = team_info.fillna('_')
+team_info['team_id'].loc[6488512] = 7217630
+team_info['team_id'].loc[7136526] = 7217630
+team_info['team_id'].loc[5528463] = 5922927
+team_info = team_info.fillna('__')
+team_info.to_csv('team_info.csv')
+team_wr = {}
+capitan_wr = {}
+account_wr = {}
+elo_teams = {}
+print(123)
+X = solve2(pro_matches)
+with open('team_wr.pickle', 'wb') as f:
+    pickle.dump(team_wr,f)
+with open('capitan_wr.pickle', 'wb') as f1:
+    pickle.dump(capitan_wr,f1)
+with open('account_wr.pickle', 'wb') as f2:
+    pickle.dump(account_wr,f2)
+with open('elo_teams.pickle', 'wb') as f3:
+    pickle.dump(elo_teams,f3)
 
 team_info = pd.read_csv('team_info.csv',index_col=0)
 team_info = team_info.fillna('_')
-model = pickle.load(open('model.pickle', 'rb'))
+model = pickle.load(open('model_december.pickle', 'rb'))
 pro_matches = pd.read_csv('pro_matches.csv',index_col=0)
 team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
-print(pro_matches.shape)
+print(pro_matches[:1]['match_id'])
 
 #print(data.players_wr.shape, data.team_info.shape)
 #print(data.players_wr.loc[19672354])
