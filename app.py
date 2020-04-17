@@ -353,7 +353,7 @@ def get_id_by_name(name1, name2):
     for word in ['team', 'gaming', '!']:
         if word in name1:
             name1 = name1.replace(word, "")
-        if word in name1:
+        if word in name2:
             name2 = name2.replace(word, "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
     for row in team_info_new.iterrows():
