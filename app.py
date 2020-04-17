@@ -350,6 +350,11 @@ def get_id_by_name(name1, name2):
     name2 = name2.replace(".", "")
     name1 = name1.lower().strip()
     name2 = name2.lower().strip()
+    for word in ['team', 'gaming', '!']:
+        if word in name1:
+            name1 = name1.replace(word, "")
+        if word in name1:
+            name2 = name2.replace(word, "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
     for row in team_info_new.iterrows():
         team_name = row[1]['name']
@@ -362,18 +367,13 @@ def get_id_by_name(name1, name2):
         team_tag = team_tag.replace(".", "")
         team_tag = team_tag.lower().strip()
         if ((name1 == team_name) or (name1 == team_tag)):
-            print(name2, team_name, team_tag)
+            # print(name1,team_name,team_tag)
             id1 = row[1]['team_id']
             break
         else:
-            name1_list = name1.split()
-            name_from_teams_list = team_name.split()
-            for word in ['team', 'gaming', '!']:
-                if word in name1_list: name1_list.remove(word)
-                if word in name_from_teams_list: name_from_teams_list.remove(word)
-            if name1_list[0] in name_from_teams_list:
+            if name1 in team_name:
                 id1 = row[1]['team_id']
-                print(name2, team_name, team_tag)
+                print(name1, team_name, team_tag)
                 break
 
     for row in team_info_new.iterrows():
@@ -386,17 +386,12 @@ def get_id_by_name(name1, name2):
         team_tag = team_tag.replace("-", "")
         team_tag = team_tag.replace(".", "")
         team_tag = team_tag.lower().strip()
+
         if ((name2 == team_name) or (name2 == team_tag)):
-            print(name2, team_name, team_tag)
             id2 = row[1]['team_id']
             break
         else:
-            name2_list = name2.split()
-            name_from_teams_list = team_name.split()
-            for word in ['team', 'gaming', '!']:
-                if word in name2_list: name2_list.remove(word)
-                if word in name_from_teams_list: name_from_teams_list.remove(word)
-            if name2_list[0] in name_from_teams_list:
+            if name2 in team_name:
                 print(name2, team_name, team_tag)
                 id2 = row[1]['team_id']
                 break
