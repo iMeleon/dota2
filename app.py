@@ -510,29 +510,29 @@ def find_team_cap(id_team):
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
 
-pro_matches = api.get_pro_matches_custom_sql()
-pro_matches.to_csv('pro_matches.csv') #update pro_matches
-team_info = api.get_teams_rating_db()
-team_info = team_info.fillna('_')
-team_info['team_id'].loc[6488512] = 7217630
-team_info['team_id'].loc[7136526] = 7217630
-team_info['team_id'].loc[5528463] = 5922927
-team_info = team_info.fillna('__')
-team_info.to_csv('team_info.csv')
-team_wr = {}
-capitan_wr = {}
-account_wr = {}
-elo_teams = {}
-print(123)
-X = solve2(pro_matches)
-with open('team_wr.pickle', 'wb') as f:
-    pickle.dump(team_wr,f)
-with open('capitan_wr.pickle', 'wb') as f1:
-    pickle.dump(capitan_wr,f1)
-with open('account_wr.pickle', 'wb') as f2:
-    pickle.dump(account_wr,f2)
-with open('elo_teams.pickle', 'wb') as f3:
-    pickle.dump(elo_teams,f3)
+# pro_matches = api.get_pro_matches_custom_sql()
+# pro_matches.to_csv('pro_matches.csv') #update pro_matches
+# team_info = api.get_teams_rating_db()
+# team_info = team_info.fillna('_')
+# team_info['team_id'].loc[6488512] = 7217630
+# team_info['team_id'].loc[7136526] = 7217630
+# team_info['team_id'].loc[5528463] = 5922927
+# team_info = team_info.fillna('__')
+# team_info.to_csv('team_info.csv')
+# team_wr = {}
+# capitan_wr = {}
+# account_wr = {}
+# elo_teams = {}
+# print(123)
+# X = solve2(pro_matches)
+# with open('team_wr.pickle', 'wb') as f:
+#     pickle.dump(team_wr,f)
+# with open('capitan_wr.pickle', 'wb') as f1:
+#     pickle.dump(capitan_wr,f1)
+# with open('account_wr.pickle', 'wb') as f2:
+#     pickle.dump(account_wr,f2)
+# with open('elo_teams.pickle', 'wb') as f3:
+#     pickle.dump(elo_teams,f3)
 
 team_info = pd.read_csv('team_info.csv',index_col=0)
 team_info = team_info.fillna('_')
