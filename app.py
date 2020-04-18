@@ -531,7 +531,7 @@ api = OpenDotaAPI(verbose=True)
 
 team_info = pd.read_csv('team_info.csv',index_col=0)
 team_info = team_info.fillna('_')
-model = pickle.load(open('model_december.pickle', 'rb'))
+model = pickle.load(open('model.pickle', 'rb'))
 pro_matches = pd.read_csv('pro_matches.csv',index_col=0)
 team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
