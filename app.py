@@ -30,13 +30,11 @@ class OpenDotaAPI():
         else:
             ValueError("Unable to connect to OpenDota API")
 
-    def get_teams_rating_db(self):
-        url = "https://api.opendota.com/api/explorer?sql=select%20R.team_id,%20name,%20rating,%20wins,%20losses,%20last_match_time,%20tag%20from%20teams%20T%20join%20team_rating%20R%20on%20T.team_id=R.team_id"
-        teams_rating = sorted(self._call(url, None, tries=2)['rows'], key=lambda team: team['rating'], reverse=True)
-        return pd.DataFrame(teams_rating, index=[team['team_id'] for team in teams_rating])
+
     def get_pro_matches_custom_sql(self,limit = 100000):
         err = True
-        url = "https://api.opendota.com/api/explorer?sql=select%20m.match_id,%20m.radiant_win,%20p.patch,%20m.start_time,%20m.leagueid,%20m.game_mode,%20m.radiant_team_id,%20m.dire_team_id,%20m.radiant_team_complete,%20m.dire_team_complete,%20m.radiant_captain,%20m.dire_captain,%20max(case%20when%20pm.rn%20=%201%20then%20pm.account_id%20end)%20account_id_1,%20max(case%20when%20pm.rn%20=%202%20then%20pm.account_id%20end)%20account_id_2,%20max(case%20when%20pm.rn%20=%203%20then%20pm.account_id%20end)%20account_id_3,%20max(case%20when%20pm.rn%20=%204%20then%20pm.account_id%20end)%20account_id_4,%20max(case%20when%20pm.rn%20=%205%20then%20pm.account_id%20end)%20account_id_5,%20max(case%20when%20pm.rn%20=%206%20then%20pm.account_id%20end)%20account_id_6,%20max(case%20when%20pm.rn%20=%207%20then%20pm.account_id%20end)%20account_id_7,%20max(case%20when%20pm.rn%20=%208%20then%20pm.account_id%20end)%20account_id_8,%20max(case%20when%20pm.rn%20=%209%20then%20pm.account_id%20end)%20account_id_9,%20max(case%20when%20pm.rn%20=%2010%20then%20pm.account_id%20end)%20account_id_10%20from%20matches%20m%20inner%20join(%20select%20pm.*,%20row_number()%20over(partition%20by%20match_id%20order%20by%20player_slot)%20rn%20from%20player_matches%20pm)%20pm%20on%20pm.match_id%20=%20m.match_id%20join%20match_patch%20p%20on%20m.match_id=p.match_id%20%20group%20by%20m.match_id,p.patch%20order%20by%20m.match_id%20desc%20limit%20{}%20".format(limit)#where m.start_time < 1577750400
+        url = "https://api.opendota.com/api/explorer?sql=select team_r.name radiant_team_name, team_d.name dire_team_name, team_r.tag radiant_team_tag, team_d.tag dire_team_tag, m.match_id, m.radiant_win, p.patch, m.start_time, m.leagueid, m.game_mode, m.radiant_team_id, m.dire_team_id, m.radiant_team_complete, m.dire_team_complete, m.radiant_captain, m.dire_captain, max(case when pm.rn = 1 then pm.account_id end) account_id_1, max(case when pm.rn = 2 then pm.account_id end) account_id_2, max(case when pm.rn = 3 then pm.account_id end) account_id_3, max(case when pm.rn = 4 then pm.account_id end) account_id_4, max(case when pm.rn = 5 then pm.account_id end) account_id_5, max(case when pm.rn = 6 then pm.account_id end) account_id_6, max(case when pm.rn = 7 then pm.account_id end) account_id_7, max(case when pm.rn = 8 then pm.account_id end) account_id_8, max(case when pm.rn = 9 then pm.account_id end) account_id_9, max(case when pm.rn = 10 then pm.account_id end) account_id_10 from matches m inner join( select pm.*, row_number() over(partition by match_id order by player_slot) rn from player_matches pm) pm on pm.match_id = m.match_id join match_patch p on m.match_id=p.match_id join teams team_r on m.radiant_team_id=team_r.team_id join teams team_d on m.dire_team_id=team_d.team_id group by m.match_id,p.patch,team_r.name,team_d.name,team_r.tag,team_d.tag order by m.match_id desc "
+        #where m.start_time < 1577750400
         while err:
             resp = self._call(url, None,tries= 2)
             if resp['err'] is None:
@@ -45,74 +43,38 @@ class OpenDotaAPI():
             print(resp['err'])
         matches = resp['rows']
         return pd.DataFrame(matches, index = [match['match_id'] for match in matches])
-    def get_teem_players(self, team_id):
-        url = "https://api.opendota.com/api/teams/{}/players".format(team_id)
-        return self._call(url, None, tries=2)
 
-    def get_teams(self):
-        url = "https://api.opendota.com/api/teams"
-        return self._call(url, None, tries=2)
-
-    # Return a dictionary with match information
-    # Return a list of 100 recent matches; save smaller match_id
-    def get_recent_matches(self, use_last_match=False):
-        params = dict()
-        if use_last_match:
-            params['less_than_match_id'] = self.last_match_id
-        url = "https://api.opendota.com/api/publicMatches"
-        matches = self._call(url, params)
-        self.last_match_id = min([item['match_id'] for item in matches])
-        return matches
-        # Return a list of 100 recent matches; save smaller match_id
-
-    def get_recent_pro_matches(self, use_last_match=False):
-        params = dict()
-        if use_last_match:
-            params['less_than_match_id'] = use_last_match
-        url = "https://api.opendota.com/api/proMatches"
-        matches = self._call(url, params)
-        self.last_match_id = min([item['match_id'] for item in matches])
-        return matches
-
-    # Return a dictionary with match information
-
-    def get_recent_pro_matches(self, use_last_match=False):
-        params = dict()
-        if use_last_match:
-            params['less_than_match_id'] = use_last_match
-        url = "https://api.opendota.com/api/proMatches"
-        matches = self._call(url, params)
-        self.last_match_id = min([item['match_id'] for item in matches])
-        return matches
-
-    def get_player_wr(self, player_id):
-        params = dict()
-        params['game_mode'] = 2
-        url = "https://api.opendota.com/api/players/{}/wl".format(player_id)
-        matches = self._call(url, params)
-        return matches
-
-    def get_match_info(self, match_id):
-        url = "https://api.opendota.com/api/matches/" + str(match_id)
-        return self._call(url, None)
-
-    def get_team_info(self, match_id, ):
-        url = "https://api.opendota.com/api/teams/" + str(match_id)
-        return self._call(url, None, tries=1)
 
 
 def solve(row):
     match = row
     if match['radiant_team_id'] not in team_wr:
         team_wr[match['radiant_team_id']] = {
+            'team_id': int(match['radiant_team_id']),
             'win': 0,
-            'losses': 0
+            'losses': 0,
+            'name':match['radiant_team_name'] if type(match['radiant_team_name'])  != float else '_',
+            'tag':match['radiant_team_tag'] if type(match['radiant_team_tag'])  != float else '_',
+            'last_match_time': int(match['start_time'])
         }
+    else:
+        team_wr[match['radiant_team_id']]['last_match_time'] = int(match['start_time'])
+        team_wr[match['radiant_team_id']]['tag'] = match['radiant_team_tag'] if type(match['radiant_team_tag'])  != float else '_'
+        team_wr[match['radiant_team_id']]['name'] = match['radiant_team_name'] if type(match['radiant_team_name'])  != float else '_'
+
     if match['dire_team_id'] not in team_wr:
         team_wr[match['dire_team_id']] = {
+            'team_id': int(match['dire_team_id']),
             'win': 0,
-            'losses': 0
+            'losses': 0,
+            'name':match['dire_team_name'] if type(match['dire_team_name'])  != float else '_',
+            'tag':match['dire_team_tag'] if type(match['dire_team_tag'])  != float else '_',
+            'last_match_time': int(match['start_time'])
         }
+    else:
+        team_wr[match['dire_team_id']]['last_match_time'] = int(match['start_time'])
+        team_wr[match['dire_team_id']]['tag'] = match['dire_team_tag'] if type(match['dire_team_tag'])  != float else '_'
+        team_wr[match['dire_team_id']]['name'] = match['dire_team_name'] if type(match['dire_team_name'])  != float else '_'
     # ///////////team
     if match['radiant_captain'] not in capitan_wr:
         capitan_wr[match['radiant_captain']] = {
@@ -339,63 +301,44 @@ def predict(id1, id2):
     return res
 
 
-def get_id_by_name(name1, name2):
+def get_id_by_name(name1):
     id1 = None
-    id2 = None
     name1 = name1.replace("-", "")
-    name2 = name2.replace("-", "")
     name1 = name1.replace(" ", "")
-    name2 = name2.replace(" ", "")
     name1 = name1.replace(".", "")
-    name2 = name2.replace(".", "")
     name1 = name1.lower().strip()
-    name2 = name2.lower().strip()
     for word in ['team', 'gaming', '!']:
         if word in name1:
             name1 = name1.replace(word, "")
-        if word in name2:
-            name2 = name2.replace(word, "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
-    for row in team_info_new.iterrows():
-        team_name = row[1]['name']
-        team_name = team_name.replace("-", "")
-        team_name = team_name.replace(".", "")
-        team_name = team_name.replace(" ", "")
-        team_name = team_name.lower().strip()
-        team_tag = row[1]['tag']
-        team_tag = team_tag.replace("-", "")
-        team_tag = team_tag.replace(".", "")
-        team_tag = team_tag.lower().strip()
-        if ((name1 == team_name) or (name1 == team_tag)):
-            # print(name1,team_name,team_tag)
-            id1 = row[1]['team_id']
-            break
-        else:
-            if name1 in team_name:
+    if name1 == 'og':
+        id1 = 2586976
+    else:
+        for row in team_info_new.iterrows():
+            team_name = row[1]['name']
+            team_name = team_name.replace("-", "")
+            team_name = team_name.replace(".", "")
+            team_name = team_name.replace(" ", "")
+            team_name = team_name.lower().strip()
+            for word in ['team', 'gaming', '!']:
+                if word in team_name:
+                    team_name = team_name.replace(word, "")
+            team_tag = row[1]['tag']
+            team_tag = team_tag.replace("-", "")
+            team_tag = team_tag.replace(".", " ")
+            team_tag = team_tag.lower().strip()
+            if row[1]['team_id'] ==7553952:
+                print(name1)
+                print(team_name )
+            if (name1 == team_name) or (name1 == team_tag):
                 id1 = row[1]['team_id']
-                print(name1, team_name, team_tag)
                 break
+            else:
+                if (len(team_name) != 0) and (name1 == team_name.split()[0]):
+                    id1 = row[1]['team_id']
+                    break
 
-    for row in team_info_new.iterrows():
-        team_name = row[1]['name']
-        team_name = team_name.replace("-", "")
-        team_name = team_name.replace(".", "")
-        team_name = team_name.replace(" ", "")
-        team_name = team_name.lower().strip()
-        team_tag = row[1]['tag']
-        team_tag = team_tag.replace("-", "")
-        team_tag = team_tag.replace(".", "")
-        team_tag = team_tag.lower().strip()
-
-        if ((name2 == team_name) or (name2 == team_tag)):
-            id2 = row[1]['team_id']
-            break
-        else:
-            if name2 in team_name:
-                print(name2, team_name, team_tag)
-                id2 = row[1]['team_id']
-                break
-    return id1, id2
+    return id1
 def winrate(win,loss):
     if loss+win == 0:
         return 0.47722
@@ -490,35 +433,41 @@ def make_row(id1,id2):
                   'total_players_games_tario', 'elo_rating_ratio']]
     print('END')
     return res
+
+
 def find_team_cap(id_team):
     for row in pro_matches.iterrows():
         match = row[1]
         if match['game_mode'] == 1:
             continue
         if id_team == match['radiant_team_id']:
-            print('rrr')
-            return match[['account_id_1','account_id_2', 'account_id_3', 'account_id_4', 'account_id_5','radiant_captain']]
+
+            if str(match['radiant_captain']) == 'nan':
+                continue
+            return match[
+                ['account_id_1', 'account_id_2', 'account_id_3', 'account_id_4', 'account_id_5', 'radiant_captain']]
         elif id_team == match['dire_team_id']:
-            print('ddd')
-            return match[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9','account_id_10','dire_captain']]
+
+            if str(match['dire_captain']) == 'nan':
+                continue
+            return match[
+                ['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9', 'account_id_10', 'dire_captain']]
     abort(400, description="id2 is None")
+def rating_c(row):
+    row['rating'] = elo_teams[row['team_id']]
+    return row
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
-
+pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # pro_matches = api.get_pro_matches_custom_sql()
 # pro_matches.to_csv('pro_matches.csv') #update pro_matches
-# team_info = api.get_teams_rating_db()
-# team_info = team_info.fillna('_')
-# team_info['team_id'].loc[6488512] = 7217630
-# team_info['team_id'].loc[7136526] = 7217630
-# team_info['team_id'].loc[5528463] = 5922927
-# team_info = team_info.fillna('__')
-# team_info.to_csv('team_info.csv')
+#
+# print('Start computing ...')
 # team_wr = {}
 # capitan_wr = {}
 # account_wr = {}
 # elo_teams = {}
-# print(123)
+#
 # X = solve2(pro_matches)
 # with open('team_wr.pickle', 'wb') as f:
 #     pickle.dump(team_wr,f)
@@ -527,16 +476,31 @@ api = OpenDotaAPI(verbose=True)
 # with open('account_wr.pickle', 'wb') as f2:
 #     pickle.dump(account_wr,f2)
 # with open('elo_teams.pickle', 'wb') as f3:
-#     pickle.dump(elo_teams,f3)
+#     pickle.dump(elo_teams, f3)
+# team_info = pd.DataFrame(team_wr).T
+# team_info[['team_id', 'last_match_time']] = team_info[['team_id', 'last_match_time']].astype(int)
+# team_info = team_info.fillna('_')
+# team_info.to_csv('team_info.csv')
+# print('Finish computing')
 
-team_info = pd.read_csv('team_info.csv',index_col=0)
-team_info = team_info.fillna('_')
+
+
+
+
 model = pickle.load(open('model.pickle', 'rb'))
-pro_matches = pd.read_csv('pro_matches.csv',index_col=0)
+pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
+team_info = pd.read_csv('team_info.csv', index_col=0)
+team_info = team_info.fillna('_')
+
 team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
+
+# team_info = team_info.apply(rating_c,axis = 1)
+# team_info = team_info.drop(index = 5026801).sort_values(by=['rating'], ascending = False)
+# team_info.to_csv('team_info.csv')
+
 print(pro_matches[:1]['match_id'])
 
 #print(data.players_wr.shape, data.team_info.shape)
@@ -570,13 +534,13 @@ def get_tasks2():
     if name2 is None:
         abort(400, description="id2 is None")
     print(name1,name2)
-    id1, id2 = get_id_by_name(name1, name2)
-    print(id1, id2)
+    id1 = get_id_by_name(name1)
     if id1 is None:
         abort(400, description="Name 1 not found")
+    id2 = get_id_by_name(name2)
     if id2 is None:
         abort(400, description="Name 2 not found")
-
+    print(id1, id2)
     x1 = make_row(int(id1), int(id2))
     result = model.predict_proba(x1)
 
@@ -607,10 +571,14 @@ def predict():
     if name2 is None:
         abort(400, description="id2 is None")
     print(name1, name2)
-    id1, id2 = get_id_by_name(name1, name2)
+    id1 = get_id_by_name(name1)
+    if id1 is None:
+        return render_template('index.html', prediction_text='{} fix name pls'.format(id1))
+    id2 = get_id_by_name(name2)
+    if id2 is None:
+        return render_template('index.html', prediction_text='{} fix name pls'.format(id2))
     print(id1, id2)
-    if id1 is None or id is None:
-        return render_template('index.html', prediction_text='{},{} fix name pls'.format(id1,id2))
+
     x1 = make_row(int(id1), int(id2))
     result = model.predict_proba(x1)
     x2 = make_row(int(id2), int(id1))
