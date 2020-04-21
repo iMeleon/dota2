@@ -45,7 +45,6 @@ class OpenDotaAPI():
         return pd.DataFrame(matches, index = [match['match_id'] for match in matches])
 
 
-
 def solve(row):
     match = row
     if match['radiant_team_id'] not in team_wr:
@@ -53,29 +52,38 @@ def solve(row):
             'team_id': int(match['radiant_team_id']),
             'win': 0,
             'losses': 0,
-            'name':match['radiant_team_name'] if type(match['radiant_team_name'])  != float else '_',
-            'tag':match['radiant_team_tag'] if type(match['radiant_team_tag'])  != float else '_',
-            'last_match_time': int(match['start_time'])
+            'name': match['radiant_team_name'] if type(match['radiant_team_name']) != float else '_',
+            'tag': match['radiant_team_tag'] if type(match['radiant_team_tag']) != float else '_',
+            'last_match_time': int(match['start_time']),
+            'rating': 1000,
+            'capitan': match['radiant_captain']
         }
     else:
         team_wr[match['radiant_team_id']]['last_match_time'] = int(match['start_time'])
-        team_wr[match['radiant_team_id']]['tag'] = match['radiant_team_tag'] if type(match['radiant_team_tag'])  != float else '_'
-        team_wr[match['radiant_team_id']]['name'] = match['radiant_team_name'] if type(match['radiant_team_name'])  != float else '_'
+        team_wr[match['radiant_team_id']]['tag'] = match['radiant_team_tag'] if type(
+            match['radiant_team_tag']) != float else '_'
+        team_wr[match['radiant_team_id']]['name'] = match['radiant_team_name'] if type(
+            match['radiant_team_name']) != float else '_'
+        team_wr[match['radiant_team_id']]['capitan'] = match['radiant_captain']
 
     if match['dire_team_id'] not in team_wr:
         team_wr[match['dire_team_id']] = {
             'team_id': int(match['dire_team_id']),
             'win': 0,
             'losses': 0,
-            'name':match['dire_team_name'] if type(match['dire_team_name'])  != float else '_',
-            'tag':match['dire_team_tag'] if type(match['dire_team_tag'])  != float else '_',
-            'last_match_time': int(match['start_time'])
+            'name': match['dire_team_name'] if type(match['dire_team_name']) != float else '_',
+            'tag': match['dire_team_tag'] if type(match['dire_team_tag']) != float else '_',
+            'last_match_time': int(match['start_time']),
+            'rating': 1000,
+            'capitan': match['dire_captain']
         }
     else:
         team_wr[match['dire_team_id']]['last_match_time'] = int(match['start_time'])
-        team_wr[match['dire_team_id']]['tag'] = match['dire_team_tag'] if type(match['dire_team_tag'])  != float else '_'
-        team_wr[match['dire_team_id']]['name'] = match['dire_team_name'] if type(match['dire_team_name'])  != float else '_'
-    # ///////////team
+        team_wr[match['dire_team_id']]['tag'] = match['dire_team_tag'] if type(match['dire_team_tag']) != float else '_'
+        team_wr[match['dire_team_id']]['name'] = match['dire_team_name'] if type(
+            match['dire_team_name']) != float else '_'
+        team_wr[match['dire_team_id']]['capitan'] = match['dire_captain']
+
     if match['radiant_captain'] not in capitan_wr:
         capitan_wr[match['radiant_captain']] = {
             'win': 0,
@@ -87,6 +95,8 @@ def solve(row):
             'losses': 0
         }
     # ////////////////capitan
+    radiant_player = 1
+    dire_player = 1
     for i in range(1, 11):
         if match['account_id_{}'.format(i)] not in account_wr:
             account_wr[match['account_id_{}'.format(i)]] = {
@@ -100,9 +110,13 @@ def solve(row):
         if i < 6:
             account_wr[match['account_id_{}'.format(i)]]['win'] += match['radiant_win']
             account_wr[match['account_id_{}'.format(i)]]['losses'] += (1 - match['radiant_win'])
+            team_wr[match['radiant_team_id']]['player_{}'.format(radiant_player)] = match['account_id_{}'.format(i)]
+            radiant_player += 1
         else:
             account_wr[match['account_id_{}'.format(i)]]['win'] += (1 - match['radiant_win'])
             account_wr[match['account_id_{}'.format(i)]]['losses'] += match['radiant_win']
+            team_wr[match['dire_team_id']]['player_{}'.format(dire_player)] = match['account_id_{}'.format(i)]
+            dire_player += 1
 
     # ////////////////////player
 
@@ -130,14 +144,10 @@ def solve(row):
     capitan_wr[match['dire_captain']]['win'] += (1 - match['radiant_win'])
     capitan_wr[match['dire_captain']]['losses'] += match['radiant_win']
     kFactor = 32
-    if match['radiant_team_id'] not in elo_teams:
-        elo_teams[match['radiant_team_id']] = 1000
-    if match['dire_team_id'] not in elo_teams:
-        elo_teams[match['dire_team_id']] = 1000
-    match['r_rating'] = elo_teams[match['radiant_team_id']]
-    match['d_rating'] = elo_teams[match['dire_team_id']]
-    currRating1 = elo_teams[match['radiant_team_id']]
-    currRating2 = elo_teams[match['dire_team_id']]
+    match['r_rating'] = team_wr[match['radiant_team_id']]['rating']
+    match['d_rating'] = team_wr[match['dire_team_id']]['rating']
+    currRating1 = team_wr[match['radiant_team_id']]['rating']
+    currRating2 = team_wr[match['dire_team_id']]['rating']
     r1 = 10 ** (currRating1 / 400)
     r2 = 10 ** (currRating2 / 400)
     e1 = r1 / (r1 + r2)
@@ -146,15 +156,15 @@ def solve(row):
     win2 = 1 - win1
     ratingDiff1 = kFactor * (win1 - e1)
     ratingDiff2 = kFactor * (win2 - e2)
-    elo_teams[match['radiant_team_id']] += ratingDiff1
-    elo_teams[match['dire_team_id']] += ratingDiff2
+    team_wr[match['radiant_team_id']]['rating'] += ratingDiff1
+    team_wr[match['dire_team_id']]['rating'] += ratingDiff2
     return match
 
 
 def solve2(matches):
     X = pd.DataFrame(matches)
     X = X.iloc[::-1]
-    X = X[X['game_mode'] !=1]
+    X = X[X['game_mode'] != 1]
     X[['radiant_team_id', 'dire_team_id', 'radiant_captain', 'dire_captain']] = X[
         ['radiant_team_id', 'dire_team_id', 'radiant_captain', 'dire_captain']].fillna(0)
     X['radiant_team_id'] = X['radiant_team_id'].astype(int)
@@ -208,101 +218,14 @@ def solve2(matches):
 
 
 
-def predict(id1, id2):
-    r_df = pd.DataFrame()
-    d_df = pd.DataFrame()
-    r_df[['account_id_1', 'account_id_2', 'account_id_3', 'account_id_4', 'account_id_5',
-          'radiant_captain']] = pd.DataFrame(find_team_cap(id1)).T.reset_index(drop=True)
-    d_df[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9', 'account_id_10',
-          'dire_captain']] = pd.DataFrame(find_team_cap(id2)).T.reset_index(drop=True)
-    res_df = pd.concat([r_df, d_df], axis=1)
-    res_df['radiant_team_id'] = id1
-    res_df['dire_team_id'] = id2
-    res_df['radiant_captain'] = res_df['radiant_captain'].astype(int)
-    res_df['dire_captain'] = res_df['dire_captain'].astype(int)
-
-    res_df['r_wins'] = team_wr[id1]['win']
-    res_df['d_wins'] = team_wr[id2]['win']
-
-    res_df['r_losses'] = team_wr[id1]['losses']
-    res_df['d_losses'] = team_wr[id2]['losses']
-
-    res_df['r_cap_wins'] = capitan_wr[res_df['radiant_captain'].values[0]]['win']
-    res_df['d_cap_wins'] = capitan_wr[res_df['dire_captain'].values[0]]['win']
-
-    res_df['r_cap_losses'] = capitan_wr[res_df['radiant_captain'].values[0]]['losses']
-    res_df['d_cap_losses'] = capitan_wr[res_df['dire_captain'].values[0]]['losses']
-
-    for i in range(1, 11):
-        res_df['account_{}_wins'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['win']
-        res_df['account_{}_losses'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['losses']
-
-    res_df['r_rating'] = elo_teams[id1]
-    res_df['d_rating'] = elo_teams[id2]
-
-    res_df['r_team_winrate'] = res_df.apply(lambda row: winrate(row['r_wins'], row['r_losses']), axis=1)
-    res_df['d_team_winrate'] = res_df.apply(lambda row: winrate(row['d_wins'], row['d_losses']), axis=1)
-
-    res_df['r_capitan_winrate'] = res_df.apply(lambda row: winrate(row['r_cap_wins'], row['r_cap_losses']), axis=1)
-    res_df['d_capitan_winrate'] = res_df.apply(lambda row: winrate(row['d_cap_wins'], row['d_cap_losses']), axis=1)
-    for i in range(1, 11):
-        res_df['account_id_{}_winrate'.format(i)] = res_df.apply(
-            lambda row: winrate(row['account_{}_wins'.format(i)], row['account_{}_losses'.format(i)]), axis=1)
-
-    res_df['winrate_team_ratio'] = res_df['r_team_winrate'] / res_df['d_team_winrate']
-    res_df['winrate_capitan_ratio'] = res_df['r_capitan_winrate'] / res_df['d_capitan_winrate']
-    res_df['sum_r_team_winrate'] = res_df[['account_id_{}_winrate'.format(i) for i in range(1, 6)]].sum(axis=1)
-    res_df['sum_d_team_winrate'] = res_df[['account_id_{}_winrate'.format(i) for i in range(6, 11)]].sum(axis=1)
-    res_df['sum_winrate_team_ratio'] = res_df['sum_r_team_winrate'] / res_df['sum_d_team_winrate']
-    res_df['r_total_cap_games'] = res_df['r_cap_wins'] + res_df['r_cap_losses']
-    res_df['d_total_cap_games'] = res_df['d_cap_wins'] + res_df['d_cap_losses']
-    res_df['total_r_games'] = res_df[
-        ['account_1_wins', 'account_1_losses', 'account_2_wins', 'account_2_losses', 'account_3_wins',
-         'account_3_losses',
-         'account_4_wins', 'account_4_losses', 'account_5_wins',
-         'account_5_losses']].sum(axis=1)
-    res_df['total_d_games'] = res_df[['account_6_wins', 'account_6_losses',
-                                      'account_7_wins', 'account_7_losses', 'account_8_wins',
-                                      'account_8_losses', 'account_9_wins', 'account_9_losses',
-                                      'account_10_wins', 'account_10_losses']].sum(axis=1)
-    res_df['total_capitan_games_tario'] = res_df['r_total_cap_games'] / res_df['d_total_cap_games']
-    res_df['total_players_games_tario'] = res_df['total_r_games'] / res_df['total_d_games']
-    res_df['elo_rating_ratio'] = res_df['r_rating'] / res_df['d_rating']
-    # res_df = res_df.drop([ 'account_1_wins',
-    #        'account_1_losses', 'account_2_wins', 'account_2_losses',
-    #        'account_3_wins', 'account_3_losses', 'account_4_wins',
-    #        'account_4_losses', 'account_5_wins', 'account_5_losses',
-    #        'account_6_wins', 'account_6_losses', 'account_7_wins',
-    #        'account_7_losses', 'account_8_wins', 'account_8_losses',
-    #        'account_9_wins', 'account_9_losses', 'account_10_wins',
-    #        'account_10_losses','account_id_1_winrate', 'account_id_2_winrate',
-    #        'account_id_3_winrate', 'account_id_4_winrate', 'account_id_5_winrate',
-    #        'account_id_6_winrate', 'account_id_7_winrate', 'account_id_8_winrate',
-    #  'account_id_9_winrate', 'account_id_10_winrate','r_cap_wins', 'd_cap_wins', 'r_cap_losses', 'd_cap_losses'],axis = 1)
-    res = res_df[['r_wins', 'd_wins', 'r_losses', 'd_losses', 'r_cap_wins', 'd_cap_wins',
-                  'r_cap_losses', 'd_cap_losses', 'r_rating', 'd_rating',
-                  'account_1_wins', 'account_1_losses', 'account_2_wins',
-                  'account_2_losses', 'account_3_wins', 'account_3_losses',
-                  'account_4_wins', 'account_4_losses', 'account_5_wins',
-                  'account_5_losses', 'account_6_wins', 'account_6_losses',
-                  'account_7_wins', 'account_7_losses', 'account_8_wins',
-                  'account_8_losses', 'account_9_wins', 'account_9_losses',
-                  'account_10_wins', 'account_10_losses', 'r_team_winrate',
-                  'd_team_winrate', 'r_capitan_winrate', 'd_capitan_winrate',
-                  'account_id_1_winrate', 'account_id_2_winrate', 'account_id_3_winrate',
-                  'account_id_4_winrate', 'account_id_5_winrate', 'account_id_6_winrate',
-                  'account_id_7_winrate', 'account_id_8_winrate', 'account_id_9_winrate',
-                  'account_id_10_winrate', 'winrate_team_ratio', 'winrate_capitan_ratio',
-                  'sum_r_team_winrate', 'sum_d_team_winrate', 'sum_winrate_team_ratio',
-                  'r_total_cap_games', 'd_total_cap_games', 'total_r_games',
-                  'total_d_games', 'total_capitan_games_tario',
-                  'total_players_games_tario', 'elo_rating_ratio']]
-
-    return res
-
-
+team_names = {
+    'LGD.int': 7667517,
+    'OG':2586976
+}
 def get_id_by_name(name1):
     id1 = None
+    if name1 in team_names:
+        return team_names[name1]
     name1 = name1.replace("-", "")
     name1 = name1.replace(" ", "")
     name1 = name1.replace(".", "")
@@ -311,32 +234,29 @@ def get_id_by_name(name1):
         if word in name1:
             name1 = name1.replace(word, "")
     team_info_new = team_info.sort_values(by='last_match_time', ascending=False)
-    if name1 == 'og':
-        id1 = 2586976
-    else:
-        for row in team_info_new.iterrows():
-            team_name = row[1]['name']
-            team_name = team_name.replace("-", "")
-            team_name = team_name.replace(".", "")
-            team_name = team_name.replace(" ", "")
-            team_name = team_name.lower().strip()
-            for word in ['team', 'gaming', '!']:
-                if word in team_name:
-                    team_name = team_name.replace(word, "")
-            team_tag = row[1]['tag']
-            team_tag = team_tag.replace("-", "")
-            team_tag = team_tag.replace(".", " ")
-            team_tag = team_tag.lower().strip()
-            if row[1]['team_id'] ==7553952:
-                print(name1)
-                print(team_name )
-            if (name1 == team_name) or (name1 == team_tag):
+    for row in team_info_new.iterrows():
+        team_name = row[1]['name']
+        team_name = team_name.replace("-", "")
+        team_name = team_name.replace(".", "")
+        team_name = team_name.replace(" ", "")
+        team_name = team_name.lower().strip()
+        for word in ['team', 'gaming', '!']:
+            if word in team_name:
+                team_name = team_name.replace(word, "")
+        team_tag = row[1]['tag']
+        team_tag = team_tag.replace("-", "")
+        team_tag = team_tag.replace(".", " ")
+#         team_tag = team_tag.lower().strip()
+#         if row[1]['team_id'] ==7667517:
+#             print(name1)
+#             print(team_name )
+        if (name1 == team_name) or (name1 == team_tag):
+            id1 = row[1]['team_id']
+            break
+        else:
+            if (len(team_name) != 0) and (name1 == team_name.split()[0]):
                 id1 = row[1]['team_id']
                 break
-            else:
-                if (len(team_name) != 0) and (name1 == team_name.split()[0]):
-                    id1 = row[1]['team_id']
-                    break
 
     return id1
 def winrate(win,loss):
@@ -347,10 +267,9 @@ def winrate(win,loss):
 def make_row(id1,id2):
     r_df = pd.DataFrame()
     d_df = pd.DataFrame()
-    print('228')
-    r_df[['account_id_1','account_id_2', 'account_id_3', 'account_id_4', 'account_id_5','radiant_captain']] = pd.DataFrame(find_team_cap(id1)).T.reset_index(drop=True)
+    r_df[['account_id_1','account_id_2', 'account_id_3', 'account_id_4', 'account_id_5','radiant_captain']] = pd.DataFrame(team_info.loc[id1][[ 'player_1', 'player_2', 'player_3', 'player_4', 'player_5','capitan']]).T.reset_index(drop=True)
 
-    d_df[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9','account_id_10','dire_captain']] = pd.DataFrame(find_team_cap(id2)).T.reset_index(drop=True)
+    d_df[['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9','account_id_10','dire_captain']] = pd.DataFrame(team_info.loc[id2][[ 'player_1', 'player_2', 'player_3', 'player_4', 'player_5','capitan']]).T.reset_index(drop=True)
     res_df = pd.concat([r_df,d_df], axis = 1)
     res_df['radiant_team_id'] = id1
     res_df['dire_team_id'] = id2
@@ -374,8 +293,8 @@ def make_row(id1,id2):
         res_df['account_{}_wins'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['win']
         res_df['account_{}_losses'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['losses']
 
-    res_df['r_rating'] = elo_teams[id1]
-    res_df['d_rating'] = elo_teams[id2]
+    res_df['r_rating'] = team_wr[id1]['rating']
+    res_df['d_rating'] = team_wr[id2]['rating']
 
     res_df['r_team_winrate'] = res_df.apply(lambda row:winrate(row['r_wins'],row['r_losses']), axis = 1)
     res_df['d_team_winrate'] = res_df.apply(lambda row:winrate(row['d_wins'],row['d_losses']), axis = 1)
@@ -431,37 +350,18 @@ def make_row(id1,id2):
                   'r_total_cap_games', 'd_total_cap_games', 'total_r_games',
                   'total_d_games', 'total_capitan_games_tario',
                   'total_players_games_tario', 'elo_rating_ratio']]
-    print('END')
     return res
 
 
-def find_team_cap(id_team):
-    for row in pro_matches.iterrows():
-        match = row[1]
-        if match['game_mode'] == 1:
-            continue
-        if id_team == match['radiant_team_id']:
-
-            if str(match['radiant_captain']) == 'nan':
-                continue
-            return match[
-                ['account_id_1', 'account_id_2', 'account_id_3', 'account_id_4', 'account_id_5', 'radiant_captain']]
-        elif id_team == match['dire_team_id']:
-
-            if str(match['dire_captain']) == 'nan':
-                continue
-            return match[
-                ['account_id_6', 'account_id_7', 'account_id_8', 'account_id_9', 'account_id_10', 'dire_captain']]
-    abort(400, description="id2 is None")
 def rating_c(row):
     row['rating'] = elo_teams[row['team_id']]
     return row
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
 pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
-# pro_matches = api.get_pro_matches_custom_sql()
-# pro_matches.to_csv('pro_matches.csv') #update pro_matches
-#
+#pro_matches = api.get_pro_matches_custom_sql()
+#pro_matches.to_csv('pro_matches.csv') #update pro_matches
+
 # print('Start computing ...')
 # team_wr = {}
 # capitan_wr = {}
@@ -481,8 +381,9 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # team_info[['team_id', 'last_match_time']] = team_info[['team_id', 'last_match_time']].astype(int)
 # team_info = team_info.fillna('_')
 # team_info.to_csv('team_info.csv')
+# team_info = team_info.drop(index = 5026801).sort_values(by=['rating'], ascending = False)
 # print('Finish computing')
-
+#
 
 
 
@@ -497,9 +398,8 @@ capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
 
-# team_info = team_info.apply(rating_c,axis = 1)
-# team_info = team_info.drop(index = 5026801).sort_values(by=['rating'], ascending = False)
-# team_info.to_csv('team_info.csv')
+
+team_info.to_csv('team_info.csv')
 
 print(pro_matches[:1]['match_id'])
 
