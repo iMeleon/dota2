@@ -220,7 +220,9 @@ def solve2(matches):
 
 team_names = {
     'LGD.int': 7667517,
-    'OG':2586976
+    'OG':2586976,
+    'BOOM ID': 7732977,
+    'Typhoon EC':7099096,
 }
 def get_id_by_name(name1):
     id1 = None
@@ -245,7 +247,7 @@ def get_id_by_name(name1):
                 team_name = team_name.replace(word, "")
         team_tag = row[1]['tag']
         team_tag = team_tag.replace("-", "")
-        team_tag = team_tag.replace(".", " ")
+        team_tag = team_tag.replace(".", "")
 #         team_tag = team_tag.lower().strip()
 #         if row[1]['team_id'] ==7667517:
 #             print(name1)
@@ -359,9 +361,9 @@ def rating_c(row):
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
 pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
-#pro_matches = api.get_pro_matches_custom_sql()
-#pro_matches.to_csv('pro_matches.csv') #update pro_matches
-
+# pro_matches = api.get_pro_matches_custom_sql()
+# pro_matches.to_csv('pro_matches.csv') #update pro_matches
+#
 # print('Start computing ...')
 # team_wr = {}
 # capitan_wr = {}
@@ -383,8 +385,8 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # team_info.to_csv('team_info.csv')
 # team_info = team_info.drop(index = 5026801).sort_values(by=['rating'], ascending = False)
 # print('Finish computing')
+# #
 #
-
 
 
 
