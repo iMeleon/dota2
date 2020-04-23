@@ -288,9 +288,11 @@ def solve2(matches):
 
 team_names = {
     'LGD.int': 7667517,
-    'OG':2586976,
+    'OG': 2586976,
     'BOOM ID': 7732977,
-    'Typhoon EC':7099096,
+    'Typhoon EC': 7099096,
+    'VG.P': 7422511,
+    'Keen Gaming.L': 7554790
 }
 def get_id_by_name(name1):
     id1 = None
@@ -465,6 +467,7 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 
 
 model = pickle.load(open('model.pickle', 'rb'))
+
 pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 team_info = pd.read_csv('team_info.csv', index_col=0)
 team_info = team_info.fillna('_')
