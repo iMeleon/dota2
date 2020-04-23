@@ -3,11 +3,19 @@ from datetime import datetime
 import time
 import json
 import requests as req
-import numpy as np
-import pandas as pd
 import pickle
 from flask import Flask, jsonify, request, make_response, abort, render_template
 import pandas as pd
+import itertools
+import math
+import trueskill
+def win_probability(team1, team2):
+    delta_mu = sum(r.mu for r in team1) - sum(r.mu for r in team2)
+    sum_sigma = sum(r.sigma ** 2 for r in itertools.chain(team1, team2))
+    size = len(team1) + len(team2)
+    denom = math.sqrt(size * (4.166666666666667 * 4.166666666666667) + sum_sigma)
+    ts = trueskill.global_env()
+    return ts.cdf(delta_mu / denom)
 
 
 class OpenDotaAPI():
@@ -56,6 +64,7 @@ def solve(row):
             'tag': match['radiant_team_tag'] if type(match['radiant_team_tag']) != float else '_',
             'last_match_time': int(match['start_time']),
             'rating': 1000,
+            'TS_rating': trueskill.Rating(),
             'capitan': match['radiant_captain']
         }
     else:
@@ -75,6 +84,7 @@ def solve(row):
             'tag': match['dire_team_tag'] if type(match['dire_team_tag']) != float else '_',
             'last_match_time': int(match['start_time']),
             'rating': 1000,
+            'TS_rating': trueskill.Rating(),
             'capitan': match['dire_captain']
         }
     else:
@@ -101,7 +111,8 @@ def solve(row):
         if match['account_id_{}'.format(i)] not in account_wr:
             account_wr[match['account_id_{}'.format(i)]] = {
                 'win': 0,
-                'losses': 0
+                'losses': 0,
+                'rating': env_players.Rating()
             }
 
         match['account_{}_wins'.format(i)] += account_wr[match['account_id_{}'.format(i)]]['win']
@@ -158,6 +169,58 @@ def solve(row):
     ratingDiff2 = kFactor * (win2 - e2)
     team_wr[match['radiant_team_id']]['rating'] += ratingDiff1
     team_wr[match['dire_team_id']]['rating'] += ratingDiff2
+
+    r1 = team_wr[match['radiant_team_id']]['TS_rating']
+    r2 = team_wr[match['dire_team_id']]['TS_rating']
+    match['TSr_rating'] = r1.mu
+    match['TSd_rating'] = r2.mu
+    t1 = [r1]  # Team A contains just 1P
+    t2 = [r2]  # Team B contains 2P and 3P
+    match['teams_win_prob'] = win_probability(t1, t2)
+    new_r1, new_r2 = trueskill.rate([t1, t2], ranks=[1 - match['radiant_win'], match['radiant_win']])
+    new_r1, new_r2 = new_r1[0], new_r2[0]
+    team_wr[match['radiant_team_id']]['TS_rating'] = new_r1
+    team_wr[match['dire_team_id']]['TS_rating'] = new_r2
+    TSrating[match['radiant_team_id']] = new_r1
+    TSrating[match['dire_team_id']] = new_r2
+
+    r1 = account_wr[match['account_id_{}'.format(1)]]['rating']
+    r2 = account_wr[match['account_id_{}'.format(2)]]['rating']
+    r3 = account_wr[match['account_id_{}'.format(3)]]['rating']
+    r4 = account_wr[match['account_id_{}'.format(4)]]['rating']
+    r5 = account_wr[match['account_id_{}'.format(5)]]['rating']
+    r6 = account_wr[match['account_id_{}'.format(6)]]['rating']
+    r7 = account_wr[match['account_id_{}'.format(7)]]['rating']
+    r8 = account_wr[match['account_id_{}'.format(8)]]['rating']
+    r9 = account_wr[match['account_id_{}'.format(9)]]['rating']
+    r10 = account_wr[match['account_id_{}'.format(10)]]['rating']
+    match['player_1_TS_rating'] = r1.mu
+    match['player_2_TS_rating'] = r2.mu
+    match['player_3_TS_rating'] = r3.mu
+    match['player_4_TS_rating'] = r4.mu
+    match['player_5_TS_rating'] = r5.mu
+    match['player_6_TS_rating'] = r6.mu
+    match['player_7_TS_rating'] = r7.mu
+    match['player_8_TS_rating'] = r8.mu
+    match['player_9_TS_rating'] = r9.mu
+    match['player_10_TS_rating'] = r10.mu
+    t1 = [r1, r2, r3, r4, r5]  # Team A contains just 1P
+    t2 = [r6, r7, r8, r9, r10]  # Team B contains 2P and 3P
+    match['players_win_prob'] = win_probability(t1, t2)
+    new_r1, new_r2 = trueskill.rate([t1, t2], ranks=[1 - match['radiant_win'], match['radiant_win']])
+    r1, r2, r3, r4, r5 = new_r1
+    r6, r7, r8, r9, r10 = new_r2
+    account_wr[match['account_id_{}'.format(1)]]['rating'] = r1
+    account_wr[match['account_id_{}'.format(2)]]['rating'] = r2
+    account_wr[match['account_id_{}'.format(3)]]['rating'] = r3
+    account_wr[match['account_id_{}'.format(4)]]['rating'] = r4
+    account_wr[match['account_id_{}'.format(5)]]['rating'] = r5
+    account_wr[match['account_id_{}'.format(6)]]['rating'] = r6
+    account_wr[match['account_id_{}'.format(7)]]['rating'] = r7
+    account_wr[match['account_id_{}'.format(8)]]['rating'] = r8
+    account_wr[match['account_id_{}'.format(9)]]['rating'] = r9
+    account_wr[match['account_id_{}'.format(10)]]['rating'] = r10
+
     return match
 
 
@@ -213,8 +276,13 @@ def solve2(matches):
     X['total_capitan_games_tario'] = X['r_total_cap_games'] / X['d_total_cap_games']
     X['total_players_games_tario'] = X['total_r_games'] / X['total_d_games']
     X['elo_rating_ratio'] = X['r_rating'] / X['d_rating']
+    X['TS_rating_ratio'] = X['TSr_rating'] / X['TSd_rating']
+    X['total_r_TS_rating'] = X[['player_1_TS_rating', 'player_2_TS_rating', 'player_3_TS_rating', 'player_4_TS_rating',
+                                'player_5_TS_rating']].sum(axis=1)
+    X['total_d_TS_rating'] = X[['player_6_TS_rating', 'player_7_TS_rating', 'player_8_TS_rating', 'player_9_TS_rating',
+                                'player_10_TS_rating']].sum(axis=1)
+    X['teams_players_rating_TS_ratio'] = X['total_r_TS_rating'] / X['total_d_TS_rating']
     return X
-
 
 
 
@@ -295,8 +363,15 @@ def make_row(id1,id2):
         res_df['account_{}_wins'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['win']
         res_df['account_{}_losses'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['losses']
 
+        res_df['player_{}_TS_rating'.format(i)] = account_wr[res_df['account_id_{}'.format(i)].values[0]]['rating'].mu
+
     res_df['r_rating'] = team_wr[id1]['rating']
     res_df['d_rating'] = team_wr[id2]['rating']
+    res_df['TSr_rating'] = TSrating[id1].mu
+    res_df['TSd_rating'] = TSrating[id2].mu
+    t1 = [TSrating[id1]]  # Team A contains just 1P
+    t2 = [TSrating[id2]]  # Team B contains 2P and 3P
+    res_df['teams_win_prob'] = win_probability(t1, t2)
 
     res_df['r_team_winrate'] = res_df.apply(lambda row:winrate(row['r_wins'],row['r_losses']), axis = 1)
     res_df['d_team_winrate'] = res_df.apply(lambda row:winrate(row['d_wins'],row['d_losses']), axis = 1)
@@ -306,6 +381,20 @@ def make_row(id1,id2):
     for i in range(1,11):
         res_df['account_id_{}_winrate'.format(i)] = res_df.apply(lambda row:winrate(row['account_{}_wins'.format(i)],row['account_{}_losses'.format(i)]), axis = 1)
 
+    r1 = account_wr[res_df['account_id_{}'.format(1)].values[0]]['rating']
+    r2 = account_wr[res_df['account_id_{}'.format(2)].values[0]]['rating']
+    r3 = account_wr[res_df['account_id_{}'.format(3)].values[0]]['rating']
+    r4 = account_wr[res_df['account_id_{}'.format(4)].values[0]]['rating']
+    r5 = account_wr[res_df['account_id_{}'.format(5)].values[0]]['rating']
+    r6 = account_wr[res_df['account_id_{}'.format(6)].values[0]]['rating']
+    r7 = account_wr[res_df['account_id_{}'.format(7)].values[0]]['rating']
+    r8 = account_wr[res_df['account_id_{}'.format(8)].values[0]]['rating']
+    r9 = account_wr[res_df['account_id_{}'.format(9)].values[0]]['rating']
+    r10 = account_wr[res_df['account_id_{}'.format(10)].values[0]]['rating']
+
+    t1 = [r1,r2,r3,r4,r5]  # Team A contains just 1P
+    t2 = [r6,r7,r8,r9,r10]  # Team B contains 2P and 3P
+    res_df['players_win_prob'] = win_probability(t1, t2)
     res_df['winrate_team_ratio'] = res_df['r_team_winrate']/res_df['d_team_winrate']
     res_df['winrate_capitan_ratio'] = res_df['r_capitan_winrate']/res_df['d_capitan_winrate']
     res_df['sum_r_team_winrate'] = res_df[['account_id_{}_winrate'.format(i)for i in range(1,6)]].sum(axis =1)
@@ -323,43 +412,26 @@ def make_row(id1,id2):
     res_df['total_capitan_games_tario']=res_df['r_total_cap_games'] /res_df['d_total_cap_games']
     res_df['total_players_games_tario']=res_df['total_r_games'] /res_df['total_d_games']
     res_df['elo_rating_ratio'] = res_df['r_rating'] / res_df['d_rating']
-    # res_df = res_df.drop([ 'account_1_wins',
-    #        'account_1_losses', 'account_2_wins', 'account_2_losses',
-    #        'account_3_wins', 'account_3_losses', 'account_4_wins',
-    #        'account_4_losses', 'account_5_wins', 'account_5_losses',
-    #        'account_6_wins', 'account_6_losses', 'account_7_wins',
-    #        'account_7_losses', 'account_8_wins', 'account_8_losses',
-    #        'account_9_wins', 'account_9_losses', 'account_10_wins',
-    #        'account_10_losses','account_id_1_winrate', 'account_id_2_winrate',
-    #        'account_id_3_winrate', 'account_id_4_winrate', 'account_id_5_winrate',
-    #        'account_id_6_winrate', 'account_id_7_winrate', 'account_id_8_winrate',
-    #  'account_id_9_winrate', 'account_id_10_winrate','r_cap_wins', 'd_cap_wins', 'r_cap_losses', 'd_cap_losses'],axis = 1)
-    res = res_df[['r_wins', 'd_wins', 'r_losses', 'd_losses', 'r_cap_wins', 'd_cap_wins',
-                  'r_cap_losses', 'd_cap_losses', 'r_rating', 'd_rating',
-                  'account_1_wins', 'account_1_losses', 'account_2_wins',
-                  'account_2_losses', 'account_3_wins', 'account_3_losses',
-                  'account_4_wins', 'account_4_losses', 'account_5_wins',
-                  'account_5_losses', 'account_6_wins', 'account_6_losses',
-                  'account_7_wins', 'account_7_losses', 'account_8_wins',
-                  'account_8_losses', 'account_9_wins', 'account_9_losses',
-                  'account_10_wins', 'account_10_losses', 'r_team_winrate',
-                  'd_team_winrate', 'r_capitan_winrate', 'd_capitan_winrate',
-                  'account_id_1_winrate', 'account_id_2_winrate', 'account_id_3_winrate',
-                  'account_id_4_winrate', 'account_id_5_winrate', 'account_id_6_winrate',
-                  'account_id_7_winrate', 'account_id_8_winrate', 'account_id_9_winrate',
-                  'account_id_10_winrate', 'winrate_team_ratio', 'winrate_capitan_ratio',
-                  'sum_r_team_winrate', 'sum_d_team_winrate', 'sum_winrate_team_ratio',
-                  'r_total_cap_games', 'd_total_cap_games', 'total_r_games',
-                  'total_d_games', 'total_capitan_games_tario',
-                  'total_players_games_tario', 'elo_rating_ratio']]
-    return res
+    res_df['TS_rating_ratio'] = res_df['TSr_rating'] / res_df['TSd_rating']
+    res_df['total_r_TS_rating'] = res_df[['player_1_TS_rating', 'player_2_TS_rating', 'player_3_TS_rating', 'player_4_TS_rating', 'player_5_TS_rating']].sum(axis=1)
+    res_df['total_d_TS_rating'] = res_df[['player_6_TS_rating', 'player_7_TS_rating', 'player_8_TS_rating', 'player_9_TS_rating', 'player_10_TS_rating']].sum(axis=1)
+    res_df['teams_players_rating_TS_ratio'] = res_df['total_r_TS_rating'] / res_df['total_d_TS_rating']
 
+    res = res_df[['teams_win_prob', 'players_win_prob', 'winrate_team_ratio',
+       'winrate_capitan_ratio', 'sum_r_team_winrate', 'sum_d_team_winrate',
+       'sum_winrate_team_ratio', 'total_r_games', 'total_d_games',
+       'total_capitan_games_tario', 'total_players_games_tario',
+       'TS_rating_ratio', 'teams_players_rating_TS_ratio']]
+    return res
 
 def rating_c(row):
     row['rating'] = elo_teams[row['team_id']]
     return row
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
+env = trueskill.TrueSkill(mu = 1000, sigma = 100,draw_probability=0)
+env.make_as_global()
+env_players = trueskill.TrueSkill(draw_probability=0)
 pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # pro_matches = api.get_pro_matches_custom_sql()
 # pro_matches.to_csv('pro_matches.csv') #update pro_matches
@@ -369,7 +441,7 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # capitan_wr = {}
 # account_wr = {}
 # elo_teams = {}
-#
+# TSrating = {}
 # X = solve2(pro_matches)
 # with open('team_wr.pickle', 'wb') as f:
 #     pickle.dump(team_wr,f)
@@ -379,6 +451,8 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 #     pickle.dump(account_wr,f2)
 # with open('elo_teams.pickle', 'wb') as f3:
 #     pickle.dump(elo_teams, f3)
+# with open('TSrating.pickle', 'wb') as f3:
+#         pickle.dump(TSrating, f3)
 # team_info = pd.DataFrame(team_wr).T
 # team_info[['team_id', 'last_match_time']] = team_info[['team_id', 'last_match_time']].astype(int)
 # team_info = team_info.fillna('_')
@@ -386,7 +460,7 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 # team_info = team_info.drop(index = 5026801).sort_values(by=['rating'], ascending = False)
 # print('Finish computing')
 # #
-#
+
 
 
 
@@ -399,6 +473,7 @@ team_wr = pickle.load(open('team_wr.pickle', 'rb'))
 capitan_wr = pickle.load(open('capitan_wr.pickle', 'rb'))
 account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
+TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
 
 team_info.to_csv('team_info.csv')
