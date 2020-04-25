@@ -429,6 +429,31 @@ def make_row(id1,id2):
 def rating_c(row):
     row['rating'] = elo_teams[row['team_id']]
     return row
+def update_db():
+
+
+    new_pro_matches = api.get_pro_matches_custom_sql()
+    to_update = new_pro_matches.loc[list(set(new_pro_matches.index) - set(pro_matches.index))]
+    if len(to_update) == 0:
+        return 'Nothing to update'
+    X = solve2(to_update)
+    global team_info
+    team_info = pd.DataFrame(team_wr).T
+    team_info[['team_id', 'last_match_time']] = team_info[['team_id', 'last_match_time']].astype(int)
+    team_info.to_csv('team_info.csv')
+    pro_matches = new_pro_matches
+    pro_matches.to_csv('pro_matches.csv')  # update pro_matches
+    with open('team_wr.pickle', 'wb') as f:
+        pickle.dump(team_wr,f)
+    with open('capitan_wr.pickle', 'wb') as f1:
+        pickle.dump(capitan_wr,f1)
+    with open('account_wr.pickle', 'wb') as f2:
+        pickle.dump(account_wr,f2)
+    with open('elo_teams.pickle', 'wb') as f3:
+        pickle.dump(elo_teams, f3)
+    with open('TSrating.pickle', 'wb') as f3:
+            pickle.dump(TSrating, f3)
+
 app = Flask(__name__)
 api = OpenDotaAPI(verbose=True)
 env = trueskill.TrueSkill(mu = 1000, sigma = 100,draw_probability=0)
@@ -480,7 +505,7 @@ TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
 
 team_info.to_csv('team_info.csv')
-
+# update_db()
 print(pro_matches[:1]['match_id'])
 
 #print(data.players_wr.shape, data.team_info.shape)
