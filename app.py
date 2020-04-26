@@ -433,6 +433,12 @@ def update_db():
 
 
     new_pro_matches = api.get_pro_matches_custom_sql()
+    global pro_matches
+    global team_wr
+    global capitan_wr
+    global account_wr
+    global elo_teams
+    global TSrating
     to_update = new_pro_matches.loc[list(set(new_pro_matches.index) - set(pro_matches.index))]
     if len(to_update) == 0:
         return 'Nothing to update'
@@ -490,7 +496,6 @@ pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
 
 
 
-
 model = pickle.load(open('model.pickle', 'rb'))
 
 pro_matches = pd.read_csv('pro_matches.csv', index_col=0)
@@ -503,9 +508,9 @@ account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
 TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
+# update_db()
 
 team_info.to_csv('team_info.csv')
-# update_db()
 print(pro_matches[:1]['match_id'])
 
 #print(data.players_wr.shape, data.team_info.shape)
