@@ -292,7 +292,8 @@ team_names = {
     'BOOM ID': 7732977,
     'Typhoon EC': 7099096,
     'VG.P': 7422511,
-    'Keen Gaming.L': 7554790
+    'Keen Gaming.L': 7554790,
+    'Typhoon E-Sports Club': 7099096
 }
 def get_id_by_name(name1):
     id1 = None
@@ -508,7 +509,7 @@ account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
 TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
-#update_db()
+# update_db()
 
 team_info.to_csv('team_info.csv')
 print(pro_matches[:1]['match_id'])
