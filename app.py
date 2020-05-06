@@ -511,6 +511,7 @@ TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
 # update_db()
 
+
 team_info.to_csv('team_info.csv')
 print(pro_matches[:1]['match_id'])
 
