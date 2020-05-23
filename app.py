@@ -509,7 +509,7 @@ account_wr = pickle.load(open('account_wr.pickle', 'rb'))
 elo_teams = pickle.load(open('elo_teams.pickle', 'rb'))
 TSrating = pickle.load(open('TSrating.pickle', 'rb'))
 
-update_db()
+# update_db()
 
 
 team_info.to_csv('team_info.csv')
